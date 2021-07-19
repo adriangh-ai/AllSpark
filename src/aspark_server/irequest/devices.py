@@ -15,10 +15,12 @@ class Dev:
     memory : int = field(init=False)        #Total memory size
     memory_free : int = field(init=False)   #Free memory (Total - (reserved - unused))
     device_type: str = 'undefined'          #CPU,GPU
+    lock : bool = False                     #Lock device to session
 
     def __post_init__(self):
         self.memory = torch.cuda.get_device_properties(self.name).total_memory if self.device_type=='gpu' else psutil.virtual_memory()[0]  #Total memory
         self.memory_free = self.mem_update()
+    
     def mem_update(self):
         """
         Updates memory_free with the current memory available. Note that it can not take into account
