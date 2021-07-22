@@ -5,10 +5,9 @@ import threading
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
-from irequest import (devices, session, user, request)
+from irequest import (devices, session, user)
 from irequest.composition import *
-from irequest.dataset import datahandler
-from irequest.Models import basemodel
+
 
 WORKDIR = Path(__file__).parent             #Program base file tree
 ### SERVER INTERFACE
@@ -20,8 +19,8 @@ def downl_model(model:str, lock:threading.Lock):
         model : str - model name, acording to Huggingface's respository.
     """
     def _download(model):
-        model_cache = Path.joinpath(WORKDIR, f"irequest/Models/cache/{model}{random.randint(1000,9999)}")    #Local model cache
-        model_folder = Path.joinpath(WORKDIR, f"irequest/Models/{model}")
+        model_cache = Path.joinpath(WORKDIR, f"irequest/models/cache/{model}{random.randint(1000,9999)}")    #Local model cache
+        model_folder = Path.joinpath(WORKDIR, f"irequest/models/{model}")
         Path(model_folder).mkdir(parents=True, exist_ok=True)
  
         model_file = Path(Path.joinpath(model_folder, "pytorch_model.bin" ))
