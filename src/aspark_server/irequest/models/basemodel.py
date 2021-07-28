@@ -17,7 +17,7 @@ class Basemodel():
     def _model_instanciation(self):
         model = AutoModel.from_pretrained(self.modelname)
         if not "cpu" in self.devices:
-            model = model.to(self.devices[0])
+            model = model.to(self.devices)
         #    if len(self.devices)>1:
         #        model = torch.nn.DataParallel(model, self.devices).share_memory()
         return model.eval() 
@@ -31,7 +31,7 @@ class Basemodel():
         _tokens = self.tokenizer(batch, padding=True
                                     ,truncation=True
                                     ,return_tensors="pt"
-                                    ,return_special_tokens_mask=True).to(self.devices[0])
+                                    ,return_special_tokens_mask=True).to(self.devices)
         self.special_mask = _tokens.pop("special_tokens_mask")  #Might change for passing args to inference
         return _tokens
     
