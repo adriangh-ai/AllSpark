@@ -26,7 +26,6 @@ class Compbase():
         output = torch.stack(output,1)                                        #stack same sentence of layers
         #Maps index_select (tensor, dim, tensor) to zipped sentence, 1, mask 
         output = list(itertools.starmap(torch.index_select, zip(output, itertools.repeat(1), special_mask)))
-        
         return output
 
     @abstractmethod

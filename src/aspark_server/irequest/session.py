@@ -33,8 +33,15 @@ class preprocess_worker():
         allowed_keys = {'correction'}
         self.__dict__.update((k, v) for k, v in kwargs.items() if k in allowed_keys)
 
-    def smart_batching(self, dataset):
-        pass
+    def _batching(self):
+        """
+        Process the input in batches. Smart batching?? preserve cumulative order of batches
+        """
+        #_sorted = list(itertools.chain(i['text'] for i in self.partialdata)) #substitute for tag
+        _batchsize = int(len(self.devs)*self.batchsize)
+        _sorted = self.req_dataset
+        for a in range(0, len(_sorted), _batchsize):
+            yield _sorted[a:a+_batchsize]
 
     def worker_start(self):
         """
@@ -110,44 +117,24 @@ class InferenceRequest():
         """
         pass
 
-    def inference_run(self):
-        """
-        Creates the worker processes and stores them in a pool to later collect the results.
-        It divides the dataset among devices, rounding up, takes the maximum between the resulting size
-        and the batch size to establish a lower portion limit and spawns (as opposed to fork()) one worker per 
-        portion per GPU.
-        """
-        #batching order (process?)
-        # launch model in dev
-        # launch inference
-        # composition same thread? new thread? process? try inference first  
-        # correction
-        # re-join recompose (metadata:{model:, composition:, correction:},tag:{{sentence:,embedding:}...}) 
-        """ 
-        for i in range(0,len(self.ses_dataset),jump):
-            workerqueue.append(ex.submit(Req_worker(modelname=self.modelname
-                                                ,layers=self.layers
-                                                ,compfunc=self.compfunc
-                                                ,correction=self.correction
-                                                ,partialdata=self.ses_dataset[i:i+jump]
-                                                ,batchsize=self.batchsize
-                                                ,single_dev=self.devs[(i//jump)%len(self.devs)]).worker_start))
-        
-        embeddings = [i.result() for i in workerqueue]
-        """
-        model = Model_factory.get_model(self.modelname, self.devs)
-        composition = Comp_factory.get_compfun(self.compfunc)
-        
+    def inference_run(self): 
         output = list()
         batches = self._batching()
 
         with torch.inference_mode():
+            model = Model_factory.get_model(self.modelname, self.devs)
+            composition = Comp_factory.get_compfun(self.compfunc)
+            time1 = time.time()
             for batch in batches:
                 tokens = model.tokenize(batch)
                 output = self._isolate_layers(model.inference(tokens))
-                output = composition.clean_special(output, model.special_mask)
-                output = composition.compose(output)
-        return [i.cpu() for i in output]
+
+                #output = composition.clean_special(output, model.special_mask)
+                #output = composition.compose(output)
+            time2 = time.time()
+            print(f"tiempoes {time2-time1}")
+
+        return "done" #[i.cpu() for i in output]
             
 
 class Session():
@@ -179,18 +166,19 @@ if __name__ == "__main__":
     with open("/home/tardis/Documents/wikisent2.txt", "r", encoding="utf-8") as f:
         lines = [f.read()]
     lines = lines[0].splitlines()
-    xdataset = lines[:1000]
+    xdataset = lines[:3000]
     
-    ses = Session(12, [123, 'bert-base-uncased', [11,12], 'cls', xdataset , 16, ['cuda:1','cuda:2']]
-                        ,[123, 'bert-base-uncased', [11,12], 'cls', xdataset , 16, ['cuda:2']])
+    #ses = Session(12, [123, 'bert-base-uncased', [11,12], 'cls', xdataset , 16, ['cuda:1','cuda:2']]
+                        #,[123, 'bert-base-uncased', [11,12], 'cls', xdataset , 16, ['cuda:2']])
     #ses3 = Session(12, [123, 'bert-base-uncased', [11,12], 'cls', xdataset , 2, ['cuda:1','cuda:2']]
     #                    ,[123, 'bert-base-uncased', [11,12], 'cls', xdataset , 16, ['cuda:2']])
-    ses3 = Session(12, [123, 'bert-base-uncased', [11,12], 'cls', xdataset , 16, ["cuda:1"]])
+    ses3 = Session(12, [123, 'bert-base-uncased', [12,12], 'f_joint', xdataset[:1500] , 32, ["cuda:1"]])
+    ses = Session(12, [123, 'bert-base-uncased', [12,12], 'f_joint', xdataset[1500:] , 32, ["cuda:2"]])
     lista = []
     with ThreadPoolExecutor() as ex:
         lista.append(ex.submit(ses.session_run))
         lista.append(ex.submit(ses3.session_run))
-        concurrent.futures.wait(lista, return_when="FIRST_EXCEPTION")
+        #concurrent.futures.wait(lista, return_when="FIRST_EXCEPTION")
         print("we still going")
         
         """ counter = 0
@@ -198,7 +186,7 @@ if __name__ == "__main__":
             counter+=1
             time.sleep(1)
             print(f"{counter}") """
-        
+        concurrent.futures.wait(lista, return_when="FIRST_EXCEPTION")
     for i in lista:
         print(i.result())
     #print(ses.session_run())

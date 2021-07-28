@@ -18,8 +18,8 @@ class Basemodel():
         model = AutoModel.from_pretrained(self.modelname)
         if not "cpu" in self.devices:
             model = model.to(self.devices[0])
-            if len(self.devices)>1:
-                model = torch.nn.DataParallel(model, self.devices).share_memory()
+        #    if len(self.devices)>1:
+        #        model = torch.nn.DataParallel(model, self.devices).share_memory()
         return model.eval() 
 
     def tokenize(self, batch):
