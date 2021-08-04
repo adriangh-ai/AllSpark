@@ -103,11 +103,16 @@ app.layout = html.Div([
                                 "Choose Composition Method",
                                 dcc.RadioItems(
                                     options=[
-                                        {'label': 'New York City', 'value': 'NYC'},
-                                        {'label': 'Montréal', 'value': 'MTL'},
-                                        {'label': 'San Francisco', 'value': 'SF'}
+                                        {'label': 'CLS', 'value': 'cls'},
+                                        {'label': 'Average', 'value': 'avg'},
+                                        {'label': 'F Joint', 'value': 'f_joint'},
+                                        {'label': 'F Ind', 'value': 'f_ind'},
+                                        {'label': 'F Inf', 'value': 'f_inf'},
+                                        {'label': 'Sentence Transformers (Siamese)', 
+                                                'value': 'siamese', 
+                                                'disabled':True},
                                     ],
-                                    value='MTL',
+                                    value='cls',
                                     labelStyle={'display':'block!important'}
                                 )
                     ])

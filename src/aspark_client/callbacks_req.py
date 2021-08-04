@@ -87,23 +87,27 @@ def parse_file_ul(contents, filename):
     
     decoded = base64.b64decode(content_string)
 
+    df = None
+    table_fragment = html.Div([ 'There was an error processing the file.'])
     try:
         if 'csv' in filename:
             df = pandas.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
+                io.StringIO(decoded.decode('utf-8')), nrows=10)
         if 'json' in filename:
             df = pandas.read_json(
                 io.StringIO(decoded.decode('utf-8')))
     except Exception as e:
         print(e)
         return html.Div([ 'There was an error processing the file.'])
-    
-    return html.Div([
+    if not df==None:
+        table_fragment =html.Div([
+        html.P('Select the column with the sentences to process'),
         html.H5(filename),
         dash_table.DataTable(
             data = df.head(10).to_dict('records'),
-            columns = [{'name':i, 'id':i} for i in df.columns],
-            style_table={'overflowY': 'scroll'}
+            columns = [{'name':i, 'id':i, 'selectable':True} for i in df.columns],
+            style_table={'overflowY': 'scroll'},
+            column_selectable='single'
         ),
         html.Div('Raw Content'),
         html.Pre(contents[0:200] + '...', style={
@@ -111,6 +115,7 @@ def parse_file_ul(contents, filename):
             'wordBreak': 'break-all'
         })
     ])
+    return table_fragment
 
 @app.callback( 
     Output('display-ul-data','children'),
