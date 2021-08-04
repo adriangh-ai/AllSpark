@@ -1,17 +1,24 @@
 import torch
 import transformers as ts
+import asyncio
 import os, random, shutil, psutil
 import threading
-from concurrent.futures import ProcessPoolExecutor
-from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
-from irequest import (devices, session, user)
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parents[2]))
+
+import grpc
+from src.grpc_files import compservice_pb2_grpc, compservice_pb2
+
+from irequest import devices, session
 from irequest.composition import *
 
 
 WORKDIR = Path(__file__).parent             #Program base file tree
 ### SERVER INTERFACE
-def downl_model(model:str, lock:threading.Lock):
+def downloadModel(model:str, lock:threading.Lock):
     """
     Creates a thread that ownloads the model, config file and tokenizer storing all in disk.
     Deletes huggingface cache.
@@ -60,17 +67,49 @@ def upl_dataset():
 ###Initialisation scripts
 #Folders and config files
 
-"""
-Computing devices:
-If cuda is available, fills the gpus, then adds cpu.
-"""
-ls_dev = [devices.Dev(  name = f"cuda:{i}" 
-                        ,device_type = "gpu") for i in 
-                                range(torch.cuda.device_count()) if torch.cuda.is_available()]
 
-ls_dev.append(devices.Dev(  name = 'cpu'
-                            ,n_cores = os.cpu_count()
-                            ,device_type = "cpu"))   #add cpu to the device list
+
+
+
+class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
+    """ 
+    Methods for the gRPC server to provide the service
+    """
+    def __init__(self):
+        """
+        Computing devices:
+        If cuda is available, fills the gpus, then adds cpu.
+        """
+        self.ls_dev = [devices.Dev(  name = f"cuda:{i}" 
+                                ,device_type = "gpu") for i in 
+                                        range(torch.cuda.device_count()) if torch.cuda.is_available()]
+
+        self.ls_dev.append(devices.Dev(  name = 'cpu'
+                                    ,n_cores = os.cpu_count()
+                                    ,device_type = "cpu"))   #add cpu to the device list
+
+    
+    def getDevices(self, request, context):
+        return compservice_pb2.DeviceInfo(dummy3=1337)
+
+def serve():
+    """
+    Method to start the grpc server
+    """
+    server= grpc.server(ThreadPoolExecutor(max_workers=10))
+    compservice_pb2_grpc.add_compserviceServicer_to_server(CompServiceServicer(), server)
+    server.add_insecure_port('[::]:42001') #add local from params? add secure?
+    server.start()
+    server.wait_for_termination()
+    server.stop()
+
+
+if __name__ == '__main__':
+
+    print("Starting server")
+    serve()
+       
+    
 
 #Composition ops
 
@@ -82,6 +121,3 @@ ls_dev.append(devices.Dev(  name = 'cpu'
 
 #Password settings
 
-
-
-#Server gRPC startup

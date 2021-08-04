@@ -1,0 +1,222 @@
+:root {
+    --font: rgb(199, 199, 199);
+    --accent: #00897b;
+    --background1: #191919;
+    --background2: #282828;
+    --background3:  #363636;
+}
+::-webkit-scrollbar { width: 0px; }
+body {
+    font-family: sans-serif;
+    background-color: var(--background1);
+    -webkit-font-smoothing: antialiased;
+    color: var(--font) 
+}
+h1, h2, h3, h4, h5, h6 {
+    color: var(--accent)
+}
+.app-header {
+    height: 60px;
+    line-height: 60px;
+    /*border-bottom: thin lightgrey solid;*/ 
+}
+
+.app-header .app-header--title {
+    font-size: 22px;
+    padding-left: 5px;
+}
+
+/* Main page tabs */
+.main-tabs {
+    background-color: var(--background3)!important;
+    color : var(--font)!important;
+    border:0px!important;
+}
+.tab--selected {
+    border-top: 3px solid var(--accent)!important;
+    background-color: var(--background2)!important;
+}
+
+/* ---------------------DROPDOWN ----------------------------*/  
+.Select {
+    color: var(--font)
+}
+.Select-control{
+    background-color: var(--background1);
+    color: var(--font);
+    display:none;
+    overflow: visible;
+    border: 1px;
+}
+#model-dropdown {  /* dirty way of changing the input, but plotly devs didn't give any doc on this*/
+    color: var(--font)
+}
+.Select-multi-value-wrapper, .Select-input, .Select-value, .Select, .Select-menu-outer{
+    background-color: var(--background1)!important;
+    border:1px;
+    color: var(--font)!important;
+}
+.Select-menu-outer{
+    background-color: var(--background1)!important;
+    border:1px solid var(--background2);
+    color: var(--font)!important;
+}
+
+.Select--single > .Select-control .Select-value, .Select-placeholder {
+    border: 1px solid var(--background3);
+}
+.Select-value-label {
+    color: var(--font)!important;
+}
+
+/* Main blocks */
+.tab-block {
+    
+    padding: 5vw; /*temp*/
+    background-color: var(--background2);
+    border: 1px solid var(--background3);
+    margin-top : 1vw;
+    margin-bottom : 1vw;
+}
+
+  
+  /* Buttons
+  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+  .button,
+  button {
+    display: inline-block;
+    height: 38px;
+    padding: 0 30px;
+    color: var(--accent);
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 35px;
+    letter-spacing: .1rem;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    background-color: var(--background1);
+    transition-duration: 0.1s;
+    border-radius: 4px;
+    border: 2px solid var(--accent);
+    cursor: pointer;
+    box-sizing: border-box; 
+    margin-left: 10px;
+}
+  .button:hover,
+  button:hover {
+      background-color: var(--accent);
+      color :#a4e0da;
+      transition-duration: 0.1s;    
+  }
+
+  /*Slider
+  __________________________________________________ */
+  #layer-div {
+      margin-top: 50px;
+  }
+  
+  /* Tables
+  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+  table {
+    border-collapse: collapse;
+  }
+  th:not(.CalendarDay),
+  td:not(.CalendarDay) {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #E1E1E1; }
+  th:first-child:not(.CalendarDay),
+  td:first-child:not(.CalendarDay) {
+    padding-left: 0; }
+  th:last-child:not(.CalendarDay),
+  td:last-child:not(.CalendarDay) {
+    padding-right: 0; }
+  
+  
+  /* Spacing
+  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+  button,
+  .button {
+    margin-bottom: 0rem; }
+  input,
+  textarea,
+  select,
+  fieldset {
+    margin-bottom: 0rem; }
+  pre,
+  dl,
+  figure,
+  table,
+  form {
+    margin-bottom: 0rem; }
+  p,
+  ul,
+  ol {
+    margin-bottom: 0.75rem; }
+  
+  /* Utilities
+  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+  .u-full-width {
+    width: 100%;
+    box-sizing: border-box; }
+  .u-max-full-width {
+    max-width: 100%;
+    box-sizing: border-box; }
+  .u-pull-right {
+    float: right; }
+  .u-pull-left {
+    float: left; }
+  
+  
+  /* Misc
+  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+  hr {
+    margin-top: 3rem;
+    margin-bottom: 3.5rem;
+    border-width: 0;
+    border-top: 1px solid #E1E1E1; }
+  
+  
+  /* Clearing
+  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+  
+  /* Self Clearing Goodness */
+  .container:after,
+  .row:after,
+  .u-cf {
+    content: "";
+    display: table;
+    clear: both; }
+  
+  
+  /* Media Queries
+  –––––––––––––––––––––––––––––––––––––––––––––––––– */
+  /*
+  Note: The best way to structure the use of media queries is to create the queries
+  near the relevant code. For example, if you wanted to change the styles for buttons
+  on small devices, paste the mobile query code up in the buttons section and style it
+  there.
+  */
+  
+  
+  /* Larger than mobile */
+  @media (min-width: 400px) {}
+  
+  /* Larger than phablet (also point when grid becomes active) */
+  @media (min-width: 550px) {}
+  
+  /* Larger than tablet */
+  @media (min-width: 750px) {}
+  
+  /* Larger than desktop */
+  @media (min-width: 1000px) {}
+  
+  /* Larger than Desktop HD */
+  @media (min-width: 1200px) {}
+
+  label {
+      display:block;
+  }
+  

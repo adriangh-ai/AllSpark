@@ -1,4 +1,4 @@
-from composition.basecomp import Compbase
+from .basecomp import Compbase
 
 import itertools
 import torch
@@ -23,8 +23,8 @@ class Comp_factory():
 
 class Cls(Compbase):
     def __init__(self):
-        Compbase.__init__(self)
-        pass
+        super(Cls, self).__init__()
+        
     def clean_special(self, output, special_mask):
         return output
     def compose(self, output):
@@ -34,7 +34,7 @@ class Cls(Compbase):
 
 class Sum(Compbase):
     def __init__(self):
-        Compbase.__init__(self)
+        super(Sum, self).__init__()
     
     def compose(self, output):
         _output = torch.stack([torch.sum(i,1) for i in output])
@@ -42,14 +42,14 @@ class Sum(Compbase):
 
 class Avg(Compbase):
     def __init__(self):
-        Compbase.__init__(self)
+        super(Avg,self).__init__()
     def compose(self,output):
         _output = torch.stack([torch.mean(i,1) for i in output])
         return torch.mean(_output,1)
 
 class Fcomp(Compbase):
     def __init__(self, alpha, beta ):
-        Compbase.__init__(self)
+        super(Fcomp,self).__init__()
         self.alpha = alpha
         self.beta = beta  
     

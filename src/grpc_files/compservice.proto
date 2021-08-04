@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+service compservice {
+    
+    rpc downloadModel(Model) returns (stream Progress) {}
+    rpc deleteModel(Model) returns (Response) {}
+    rpc getModels(Dummy) returns (ModelList) {}
+
+    rpc updloadDataset(stream Dataset) returns (Response) {}
+    rpc deleteDataset(DatasetName) returns (Response) {}
+    rpc getDatasets(Dummy) returns (DatasetList) {}
+
+    rpc inf_session(Session) returns  (stream EmbeddingData) {}
+
+    rpc getDevices(Dummy) returns (DeviceInfo) {}
+
+
+}
+
+message Progress {
+    int32 percent = 1;
+}
+message Response {
+    bool completed = 1;
+}
+message Model {
+    int32 dummy = 1;
+}
+message ModelList {
+    int32 dummy2 = 1;
+}
+message Dataset {
+    int32 dummy3 = 1;
+}
+message DatasetList {
+    int32 dummy3 = 1;
+}
+message DatasetName {
+    int32 dummy3 = 1;
+}
+message EmbeddingData {
+    int32 dummy3 = 1;
+}
+message Session{
+    int32 dummy3 = 1;
+}
+message Dummy {
+    int32 dummy3 = 1;
+}
+message DeviceInfo {
+    int32 dummy3 = 1;
+}

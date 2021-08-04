@@ -1,4 +1,4 @@
-from models.basemodel import Basemodel
+from .basemodel import Basemodel
 
 class Model_factory():
     def get_model(modelname, devices):
