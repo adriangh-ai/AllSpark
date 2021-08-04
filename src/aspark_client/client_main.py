@@ -16,6 +16,7 @@ import callbacks_inf
 #from layouts import layout1, layout2
 
 from waitress import serve
+
 app.title = "AllSpark"
 app.layout = html.Div([
     html.Div(
@@ -76,9 +77,28 @@ app.layout = html.Div([
                     
                 ]),
                 html.Div(id = "block-file", className='tab-block', children=[
-                    html.P('this is where the file is added')
+                    html.Div(className= 'file-upload-div', children=[
+                        html.H3('Dataset Selection'),
+                        dcc.Upload(id = 'file-ul-req', children=[
+                            html.Div(['Drag and Drop or Select File(s)'
+                            ]),
+                        ], style ={
+                                'width': '100%',
+                                'height': '60px',
+                                'lineHeight': '60px',
+                                'borderWidth': '1px',
+                                'borderStyle': 'dashed',
+                                'borderRadius': '5px',
+                                'textAlign': 'center',
+                                'margin': '10px',                            
+                            },
+                            multiple=False
+                        ),
+                        html.Div(id='display-ul-data', children=[])
+                    ])
                 ]),
                 html.Div(id = "block-composition", className='tab-block', children=[
+                    html.H3('Composition Method'),
                     html.Div([
                                 "Choose Composition Method",
                                 dcc.RadioItems(
@@ -93,6 +113,7 @@ app.layout = html.Div([
                     ])
                 ]),
                 html.Div(id = "block-device", className='tab-block', children=[
+                    html.H3('Computing Devices'),
                     html.Div([
                                 "Select Devices",
                                 dcc.Checklist(
@@ -129,5 +150,5 @@ def display_page(pathname):
 
 if __name__=='__main__':
     print('wtf')
-    print(callbacks_req.stub.getDevices(compservice_pb2.Dummy(dummy3=1)))
+   # print(callbacks_req.stub.getDevices(compservice_pb2.Dummy(dummy3=1)))
     serve(app.server, host='localhost', port=42000)
