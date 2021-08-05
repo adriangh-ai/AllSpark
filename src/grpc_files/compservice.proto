@@ -4,15 +4,15 @@ service compservice {
     
     rpc downloadModel(Model) returns (stream Progress) {}
     rpc deleteModel(Model) returns (Response) {}
-    rpc getModels(Dummy) returns (ModelList) {}
+    rpc getModels(Empty) returns (ModelList) {}
 
     rpc updloadDataset(stream Dataset) returns (Response) {}
     rpc deleteDataset(DatasetName) returns (Response) {}
-    rpc getDatasets(Dummy) returns (DatasetList) {}
+    rpc getDatasets(Empty) returns (DatasetList) {}
 
     rpc inf_session(Session) returns  (stream EmbeddingData) {}
 
-    rpc getDevices(Dummy) returns (DeviceInfo) {}
+    rpc getDevices(Empty) returns (DeviceList) {}
 
 
 }
@@ -23,12 +23,19 @@ message Progress {
 message Response {
     bool completed = 1;
 }
+
 message Model {
     int32 dummy = 1;
 }
 message ModelList {
-    int32 dummy2 = 1;
+    repeated ModelStruct model = 1;
 }
+message ModelStruct {
+    string name = 1;
+    int32 layers =2;
+    int32 size = 3;
+}
+
 message Dataset {
     int32 dummy3 = 1;
 }
@@ -41,12 +48,24 @@ message DatasetName {
 message EmbeddingData {
     int32 dummy3 = 1;
 }
+
 message Session{
-    int32 dummy3 = 1;
+    repeated Request request = 1;
 }
-message Dummy {
-    int32 dummy3 = 1;
+message Request {
+    string model = 1;
+    int32 layer_low = 2;
+    int32 layer_up = 3;
+    string comp_func = 4;
+    Dataset data = 5;
+    int32 batchsize = 6;
+    DeviceList devices = 7;
 }
-message DeviceInfo {
-    int32 dummy3 = 1;
+
+message DeviceList {
+    repeated string device_name = 1;
+}
+
+message Empty {
+    int32 empty = 1;
 }

@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x11\x63ompservice.proto\"\x1b\n\x08Progress\x12\x0f\n\x07percent\x18\x01 \x01(\x05\"\x1d\n\x08Response\x12\x11\n\tcompleted\x18\x01 \x01(\x08\"\x16\n\x05Model\x12\r\n\x05\x64ummy\x18\x01 \x01(\x05\"\x1b\n\tModelList\x12\x0e\n\x06\x64ummy2\x18\x01 \x01(\x05\"\x19\n\x07\x44\x61taset\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1d\n\x0b\x44\x61tasetList\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1d\n\x0b\x44\x61tasetName\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1f\n\rEmbeddingData\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x19\n\x07Session\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x17\n\x05\x44ummy\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1c\n\nDeviceInfo\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\x32\xcd\x02\n\x0b\x63ompservice\x12&\n\rdownloadModel\x12\x06.Model\x1a\t.Progress\"\x00\x30\x01\x12\"\n\x0b\x64\x65leteModel\x12\x06.Model\x1a\t.Response\"\x00\x12!\n\tgetModels\x12\x06.Dummy\x1a\n.ModelList\"\x00\x12)\n\x0eupdloadDataset\x12\x08.Dataset\x1a\t.Response\"\x00(\x01\x12*\n\rdeleteDataset\x12\x0c.DatasetName\x1a\t.Response\"\x00\x12&\n\x0c\x64getDatasets\x12\x06.Dummy\x1a\x0c.DatasetList\"\x00\x12+\n\x0binf_session\x12\x08.Session\x1a\x0e.EmbeddingData\"\x00\x30\x01\x12#\n\ngetDevices\x12\x06.Dummy\x1a\x0b.DeviceInfo\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x11\x63ompservice.proto\"\x1b\n\x08Progress\x12\x0f\n\x07percent\x18\x01 \x01(\x05\"\x1d\n\x08Response\x12\x11\n\tcompleted\x18\x01 \x01(\x08\"\x16\n\x05Model\x12\r\n\x05\x64ummy\x18\x01 \x01(\x05\"(\n\tModelList\x12\x1b\n\x05model\x18\x01 \x03(\x0b\x32\x0c.ModelStruct\"9\n\x0bModelStruct\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06layers\x18\x02 \x01(\x05\x12\x0c\n\x04size\x18\x03 \x01(\x05\"\x19\n\x07\x44\x61taset\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1d\n\x0b\x44\x61tasetList\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1d\n\x0b\x44\x61tasetName\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1f\n\rEmbeddingData\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"$\n\x07Session\x12\x19\n\x07request\x18\x01 \x03(\x0b\x32\x08.Request\"\x99\x01\n\x07Request\x12\r\n\x05model\x18\x01 \x01(\t\x12\x11\n\tlayer_low\x18\x02 \x01(\x05\x12\x10\n\x08layer_up\x18\x03 \x01(\x05\x12\x11\n\tcomp_func\x18\x04 \x01(\t\x12\x16\n\x04\x64\x61ta\x18\x05 \x01(\x0b\x32\x08.Dataset\x12\x11\n\tbatchsize\x18\x06 \x01(\x05\x12\x1c\n\x07\x64\x65vices\x18\x07 \x01(\x0b\x32\x0b.DeviceList\"!\n\nDeviceList\x12\x13\n\x0b\x64\x65vice_name\x18\x01 \x03(\t\"\x16\n\x05\x45mpty\x12\r\n\x05\x65mpty\x18\x01 \x01(\x05\x32\xcc\x02\n\x0b\x63ompservice\x12&\n\rdownloadModel\x12\x06.Model\x1a\t.Progress\"\x00\x30\x01\x12\"\n\x0b\x64\x65leteModel\x12\x06.Model\x1a\t.Response\"\x00\x12!\n\tgetModels\x12\x06.Empty\x1a\n.ModelList\"\x00\x12)\n\x0eupdloadDataset\x12\x08.Dataset\x1a\t.Response\"\x00(\x01\x12*\n\rdeleteDataset\x12\x0c.DatasetName\x1a\t.Response\"\x00\x12%\n\x0bgetDatasets\x12\x06.Empty\x1a\x0c.DatasetList\"\x00\x12+\n\x0binf_session\x12\x08.Session\x1a\x0e.EmbeddingData\"\x00\x30\x01\x12#\n\ngetDevices\x12\x06.Empty\x1a\x0b.DeviceList\"\x00\x62\x06proto3'
 )
 
 
@@ -130,9 +130,9 @@ _MODELLIST = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='dummy2', full_name='ModelList.dummy2', index=0,
-      number=1, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
+      name='model', full_name='ModelList.model', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -149,7 +149,53 @@ _MODELLIST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=105,
-  serialized_end=132,
+  serialized_end=145,
+)
+
+
+_MODELSTRUCT = _descriptor.Descriptor(
+  name='ModelStruct',
+  full_name='ModelStruct',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='ModelStruct.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='layers', full_name='ModelStruct.layers', index=1,
+      number=2, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='size', full_name='ModelStruct.size', index=2,
+      number=3, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=147,
+  serialized_end=204,
 )
 
 
@@ -180,8 +226,8 @@ _DATASET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=134,
-  serialized_end=159,
+  serialized_start=206,
+  serialized_end=231,
 )
 
 
@@ -212,8 +258,8 @@ _DATASETLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=161,
-  serialized_end=190,
+  serialized_start=233,
+  serialized_end=262,
 )
 
 
@@ -244,8 +290,8 @@ _DATASETNAME = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=192,
-  serialized_end=221,
+  serialized_start=264,
+  serialized_end=293,
 )
 
 
@@ -276,8 +322,8 @@ _EMBEDDINGDATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=223,
-  serialized_end=254,
+  serialized_start=295,
+  serialized_end=326,
 )
 
 
@@ -290,9 +336,9 @@ _SESSION = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='dummy3', full_name='Session.dummy3', index=0,
-      number=1, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
+      name='request', full_name='Session.request', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -308,23 +354,65 @@ _SESSION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=256,
-  serialized_end=281,
+  serialized_start=328,
+  serialized_end=364,
 )
 
 
-_DUMMY = _descriptor.Descriptor(
-  name='Dummy',
-  full_name='Dummy',
+_REQUEST = _descriptor.Descriptor(
+  name='Request',
+  full_name='Request',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='dummy3', full_name='Dummy.dummy3', index=0,
-      number=1, type=5, cpp_type=1, label=1,
+      name='model', full_name='Request.model', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='layer_low', full_name='Request.layer_low', index=1,
+      number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='layer_up', full_name='Request.layer_up', index=2,
+      number=3, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='comp_func', full_name='Request.comp_func', index=3,
+      number=4, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='data', full_name='Request.data', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='batchsize', full_name='Request.batchsize', index=5,
+      number=6, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='devices', full_name='Request.devices', index=6,
+      number=7, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -340,21 +428,53 @@ _DUMMY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=283,
-  serialized_end=306,
+  serialized_start=367,
+  serialized_end=520,
 )
 
 
-_DEVICEINFO = _descriptor.Descriptor(
-  name='DeviceInfo',
-  full_name='DeviceInfo',
+_DEVICELIST = _descriptor.Descriptor(
+  name='DeviceList',
+  full_name='DeviceList',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='dummy3', full_name='DeviceInfo.dummy3', index=0,
+      name='device_name', full_name='DeviceList.device_name', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=522,
+  serialized_end=555,
+)
+
+
+_EMPTY = _descriptor.Descriptor(
+  name='Empty',
+  full_name='Empty',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='empty', full_name='Empty.empty', index=0,
       number=1, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -372,21 +492,27 @@ _DEVICEINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=308,
-  serialized_end=336,
+  serialized_start=557,
+  serialized_end=579,
 )
 
+_MODELLIST.fields_by_name['model'].message_type = _MODELSTRUCT
+_SESSION.fields_by_name['request'].message_type = _REQUEST
+_REQUEST.fields_by_name['data'].message_type = _DATASET
+_REQUEST.fields_by_name['devices'].message_type = _DEVICELIST
 DESCRIPTOR.message_types_by_name['Progress'] = _PROGRESS
 DESCRIPTOR.message_types_by_name['Response'] = _RESPONSE
 DESCRIPTOR.message_types_by_name['Model'] = _MODEL
 DESCRIPTOR.message_types_by_name['ModelList'] = _MODELLIST
+DESCRIPTOR.message_types_by_name['ModelStruct'] = _MODELSTRUCT
 DESCRIPTOR.message_types_by_name['Dataset'] = _DATASET
 DESCRIPTOR.message_types_by_name['DatasetList'] = _DATASETLIST
 DESCRIPTOR.message_types_by_name['DatasetName'] = _DATASETNAME
 DESCRIPTOR.message_types_by_name['EmbeddingData'] = _EMBEDDINGDATA
 DESCRIPTOR.message_types_by_name['Session'] = _SESSION
-DESCRIPTOR.message_types_by_name['Dummy'] = _DUMMY
-DESCRIPTOR.message_types_by_name['DeviceInfo'] = _DEVICEINFO
+DESCRIPTOR.message_types_by_name['Request'] = _REQUEST
+DESCRIPTOR.message_types_by_name['DeviceList'] = _DEVICELIST
+DESCRIPTOR.message_types_by_name['Empty'] = _EMPTY
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 Progress = _reflection.GeneratedProtocolMessageType('Progress', (_message.Message,), {
@@ -416,6 +542,13 @@ ModelList = _reflection.GeneratedProtocolMessageType('ModelList', (_message.Mess
   # @@protoc_insertion_point(class_scope:ModelList)
   })
 _sym_db.RegisterMessage(ModelList)
+
+ModelStruct = _reflection.GeneratedProtocolMessageType('ModelStruct', (_message.Message,), {
+  'DESCRIPTOR' : _MODELSTRUCT,
+  '__module__' : 'compservice_pb2'
+  # @@protoc_insertion_point(class_scope:ModelStruct)
+  })
+_sym_db.RegisterMessage(ModelStruct)
 
 Dataset = _reflection.GeneratedProtocolMessageType('Dataset', (_message.Message,), {
   'DESCRIPTOR' : _DATASET,
@@ -452,19 +585,26 @@ Session = _reflection.GeneratedProtocolMessageType('Session', (_message.Message,
   })
 _sym_db.RegisterMessage(Session)
 
-Dummy = _reflection.GeneratedProtocolMessageType('Dummy', (_message.Message,), {
-  'DESCRIPTOR' : _DUMMY,
+Request = _reflection.GeneratedProtocolMessageType('Request', (_message.Message,), {
+  'DESCRIPTOR' : _REQUEST,
   '__module__' : 'compservice_pb2'
-  # @@protoc_insertion_point(class_scope:Dummy)
+  # @@protoc_insertion_point(class_scope:Request)
   })
-_sym_db.RegisterMessage(Dummy)
+_sym_db.RegisterMessage(Request)
 
-DeviceInfo = _reflection.GeneratedProtocolMessageType('DeviceInfo', (_message.Message,), {
-  'DESCRIPTOR' : _DEVICEINFO,
+DeviceList = _reflection.GeneratedProtocolMessageType('DeviceList', (_message.Message,), {
+  'DESCRIPTOR' : _DEVICELIST,
   '__module__' : 'compservice_pb2'
-  # @@protoc_insertion_point(class_scope:DeviceInfo)
+  # @@protoc_insertion_point(class_scope:DeviceList)
   })
-_sym_db.RegisterMessage(DeviceInfo)
+_sym_db.RegisterMessage(DeviceList)
+
+Empty = _reflection.GeneratedProtocolMessageType('Empty', (_message.Message,), {
+  'DESCRIPTOR' : _EMPTY,
+  '__module__' : 'compservice_pb2'
+  # @@protoc_insertion_point(class_scope:Empty)
+  })
+_sym_db.RegisterMessage(Empty)
 
 
 
@@ -475,8 +615,8 @@ _COMPSERVICE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=339,
-  serialized_end=672,
+  serialized_start=582,
+  serialized_end=914,
   methods=[
   _descriptor.MethodDescriptor(
     name='downloadModel',
@@ -503,7 +643,7 @@ _COMPSERVICE = _descriptor.ServiceDescriptor(
     full_name='compservice.getModels',
     index=2,
     containing_service=None,
-    input_type=_DUMMY,
+    input_type=_EMPTY,
     output_type=_MODELLIST,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
@@ -529,11 +669,11 @@ _COMPSERVICE = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
-    name='dgetDatasets',
-    full_name='compservice.dgetDatasets',
+    name='getDatasets',
+    full_name='compservice.getDatasets',
     index=5,
     containing_service=None,
-    input_type=_DUMMY,
+    input_type=_EMPTY,
     output_type=_DATASETLIST,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
@@ -553,8 +693,8 @@ _COMPSERVICE = _descriptor.ServiceDescriptor(
     full_name='compservice.getDevices',
     index=7,
     containing_service=None,
-    input_type=_DUMMY,
-    output_type=_DEVICEINFO,
+    input_type=_EMPTY,
+    output_type=_DEVICELIST,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),

@@ -26,7 +26,7 @@ class compserviceStub(object):
                 )
         self.getModels = channel.unary_unary(
                 '/compservice/getModels',
-                request_serializer=compservice__pb2.Dummy.SerializeToString,
+                request_serializer=compservice__pb2.Empty.SerializeToString,
                 response_deserializer=compservice__pb2.ModelList.FromString,
                 )
         self.updloadDataset = channel.stream_unary(
@@ -39,9 +39,9 @@ class compserviceStub(object):
                 request_serializer=compservice__pb2.DatasetName.SerializeToString,
                 response_deserializer=compservice__pb2.Response.FromString,
                 )
-        self.dgetDatasets = channel.unary_unary(
-                '/compservice/dgetDatasets',
-                request_serializer=compservice__pb2.Dummy.SerializeToString,
+        self.getDatasets = channel.unary_unary(
+                '/compservice/getDatasets',
+                request_serializer=compservice__pb2.Empty.SerializeToString,
                 response_deserializer=compservice__pb2.DatasetList.FromString,
                 )
         self.inf_session = channel.unary_stream(
@@ -51,8 +51,8 @@ class compserviceStub(object):
                 )
         self.getDevices = channel.unary_unary(
                 '/compservice/getDevices',
-                request_serializer=compservice__pb2.Dummy.SerializeToString,
-                response_deserializer=compservice__pb2.DeviceInfo.FromString,
+                request_serializer=compservice__pb2.Empty.SerializeToString,
+                response_deserializer=compservice__pb2.DeviceList.FromString,
                 )
 
 
@@ -89,7 +89,7 @@ class compserviceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def dgetDatasets(self, request, context):
+    def getDatasets(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -122,7 +122,7 @@ def add_compserviceServicer_to_server(servicer, server):
             ),
             'getModels': grpc.unary_unary_rpc_method_handler(
                     servicer.getModels,
-                    request_deserializer=compservice__pb2.Dummy.FromString,
+                    request_deserializer=compservice__pb2.Empty.FromString,
                     response_serializer=compservice__pb2.ModelList.SerializeToString,
             ),
             'updloadDataset': grpc.stream_unary_rpc_method_handler(
@@ -135,9 +135,9 @@ def add_compserviceServicer_to_server(servicer, server):
                     request_deserializer=compservice__pb2.DatasetName.FromString,
                     response_serializer=compservice__pb2.Response.SerializeToString,
             ),
-            'dgetDatasets': grpc.unary_unary_rpc_method_handler(
-                    servicer.dgetDatasets,
-                    request_deserializer=compservice__pb2.Dummy.FromString,
+            'getDatasets': grpc.unary_unary_rpc_method_handler(
+                    servicer.getDatasets,
+                    request_deserializer=compservice__pb2.Empty.FromString,
                     response_serializer=compservice__pb2.DatasetList.SerializeToString,
             ),
             'inf_session': grpc.unary_stream_rpc_method_handler(
@@ -147,8 +147,8 @@ def add_compserviceServicer_to_server(servicer, server):
             ),
             'getDevices': grpc.unary_unary_rpc_method_handler(
                     servicer.getDevices,
-                    request_deserializer=compservice__pb2.Dummy.FromString,
-                    response_serializer=compservice__pb2.DeviceInfo.SerializeToString,
+                    request_deserializer=compservice__pb2.Empty.FromString,
+                    response_serializer=compservice__pb2.DeviceList.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -206,7 +206,7 @@ class compservice(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/compservice/getModels',
-            compservice__pb2.Dummy.SerializeToString,
+            compservice__pb2.Empty.SerializeToString,
             compservice__pb2.ModelList.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -246,7 +246,7 @@ class compservice(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def dgetDatasets(request,
+    def getDatasets(request,
             target,
             options=(),
             channel_credentials=None,
@@ -256,8 +256,8 @@ class compservice(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/compservice/dgetDatasets',
-            compservice__pb2.Dummy.SerializeToString,
+        return grpc.experimental.unary_unary(request, target, '/compservice/getDatasets',
+            compservice__pb2.Empty.SerializeToString,
             compservice__pb2.DatasetList.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -291,7 +291,7 @@ class compservice(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/compservice/getDevices',
-            compservice__pb2.Dummy.SerializeToString,
-            compservice__pb2.DeviceInfo.FromString,
+            compservice__pb2.Empty.SerializeToString,
+            compservice__pb2.DeviceList.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

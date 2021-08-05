@@ -73,7 +73,7 @@ h1, h2, h3, h4, h5, h6 {
 .tab-block {
     
     padding: 5vw; /*temp*/
-    background-color: var(--background2);
+    background-color: #1d1d1d;
     border: 1px solid var(--background3);
     margin-top : 1vw;
     margin-bottom : 1vw;
@@ -133,6 +133,17 @@ h1, h2, h3, h4, h5, h6 {
   th:last-child:not(.CalendarDay),
   td:last-child:not(.CalendarDay) {
     padding-right: 0; }
+    .dash-table-container, .dash-spreadsheet-container, .dash-spreadsheet-inner td,
+    .dash-spreadsheet-inner table, .dash-spreadsheet-inner td {
+    border-color:#363636!important;
+    background-color: var(--background1)!important;
+    
+  }
+  .dash-header {
+    border-color:#363636!important;
+    background-color: #00897b!important;
+  }
+  
   
   
   /* Spacing

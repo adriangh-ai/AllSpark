@@ -3,6 +3,7 @@ from dash.dependencies import Input, MATCH, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
+import nltk
 import pandas
 
 from difflib import get_close_matches
@@ -12,14 +13,12 @@ import json
 import io
 import base64
 
+from nltk import tokenize
+
 from app import app
 import grpc
 from src.grpc_files import compservice_pb2, compservice_pb2_grpc
-
-
-
-channel = grpc.insecure_channel('localhost:42001')
-stub = compservice_pb2_grpc.compserviceStub(channel)
+import grpc_if_methods
 
 def _modelrepo_update():
     models = [{'label':'Network Error'}]
@@ -32,6 +31,8 @@ def _modelrepo_update():
 
 _model_list = _modelrepo_update()
 
+request_server = grpc_if_methods.Server_grpc_if("localhost:42001")
+print([str(i) for i in request_server.getDevices()])
 
 @app.callback(
     Output('model-dropdown', 'options'),
@@ -73,33 +74,35 @@ def add_content(n_clicks, children,id):
     newp = html.P(f"testing if this works OMG index is{id['index']}")
     children = [newp]
     return children
-
-if __name__ == '__main__':
-   print(model_search("bert", _model_list))
-
-
+########################################
 #####  DATASET SELECTION CALLBACKS #####
+########################################
 def parse_file_ul(contents, filename):
-    print(filename)
-    
+    """
+    Processes a sample size of the data coming from the upload frame,
+    and shows is.
+    If txt, it uses the NLTK librarty to split the sentences.
+    """
     content_type, content_string = contents.split(',')
-    print(type(content_type))
-    
     decoded = base64.b64decode(content_string)
 
-    df = None
-    table_fragment = html.Div([ 'There was an error processing the file.'])
+    df = pandas.DataFrame({'A' : []})                                       # Fallback value
+    table_fragment = html.Div([ 'There was an error processing the file.']) # Fallback return
+
     try:
+        if 'txt' in filename:
+            df = pandas.DataFrame(tokenize.sent_tokenize(decoded.decode('utf-8')))
         if 'csv' in filename:
-            df = pandas.read_csv(
-                io.StringIO(decoded.decode('utf-8')), nrows=10)
+            df = pandas.read_csv(io.StringIO(decoded.decode('utf-8')), nrows=10)
         if 'json' in filename:
-            df = pandas.read_json(
-                io.StringIO(decoded.decode('utf-8')))
+            df = pandas.read_json(io.StringIO(decoded.decode('utf-8')))
+        if 'xls' in filename:
+            df = pandas.read_excel(io.BytesIO(decoded))
+
     except Exception as e:
         print(e)
         return html.Div([ 'There was an error processing the file.'])
-    if not df==None:
+    if  not df.empty:
         table_fragment =html.Div([
         html.P('Select the column with the sentences to process'),
         html.H5(filename),
@@ -128,3 +131,4 @@ def update_data_ul(list_of_contents, list_of_names):
             #parse_file_ul(c,d) for c,d in zip(list_of_contents, list_of_names)]
             parse_file_ul(list_of_contents, list_of_names)]
         return children
+

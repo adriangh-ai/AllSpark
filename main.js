@@ -12,16 +12,18 @@ let mainWindow
 function createWindow() {
 
 	var subpy = require('child_process').spawn('python3', ['./src/aspark_client/client_main.py']);
-    
+    var subpyserv = require('child_process').spawn('python3', ['./src/aspark_server/server_main.py']);
+
     var mainAddr = 'http://localhost:42000';
     var openWindow = function() {
         mainWindow = new BrowserWindow({ width: 800, height: 600 })
         setTimeout(function() { 
             mainWindow.loadURL(mainAddr);
-        },2000);
+        },3000);
         mainWindow.on('closed', function() {
             mainWindow = null;
             subpy.kill('SIGTERM');
+            subpyserv.kill('SIGTERM');
         })
     }
     openWindow();

@@ -90,7 +90,7 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
 
     
     def getDevices(self, request, context):
-        return compservice_pb2.DeviceInfo(dummy3=1337)
+        return compservice_pb2.DeviceList(device_name=(i.name for i in self.ls_dev))
 
 def serve():
     """
