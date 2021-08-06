@@ -5,5 +5,24 @@ class Server_grpc_if():
     def __init__(self, address):
         self.channel = grpc.insecure_channel(address)
         self.stub = compservice_pb2_grpc.compserviceStub(self.channel)
+    def downloadModel(self, model):
+        return self.stub.downloadModel(compservice_pb2.Model(modelname=model)) 
+    def deleteModel(self, model):
+        return self.stub.deleteModel(compservice_pb2.Model(modelname=model)) 
+    def getModels(self, Empty):
+        pass 
+
+    def updloadDataset(self, Dataset):
+        pass 
+    def deleteDataset(self, DatasetName):
+        pass 
+    def getDatasets(self, Empty):
+        pass 
+
+    def inf_session(self, Session):
+        pass 
     def getDevices(self):
-        yield self.stub.getDevices(compservice_pb2.Empty(empty=0))
+        device_list = self.stub.getDevices(compservice_pb2.Empty(empty=0))
+        for device in device_list.device_name:
+            yield device
+

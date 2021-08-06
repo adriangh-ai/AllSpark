@@ -17,6 +17,7 @@ import callbacks_inf
 
 from waitress import serve
 
+
 app.title = "AllSpark"
 app.layout = html.Div([
     html.Div(
@@ -92,7 +93,8 @@ app.layout = html.Div([
                                 'textAlign': 'center',
                                 'margin': '10px',                            
                             },
-                            multiple=False
+                            multiple=False,
+                            max_size=-1
                         ),
                         html.Div(id='display-ul-data', children=[])
                     ])
@@ -121,13 +123,8 @@ app.layout = html.Div([
                     html.H3('Computing Devices'),
                     html.Div([
                                 "Select Devices",
-                                dcc.Checklist(
-                                    options=[
-                                        {'label': 'New York City', 'value': 'NYC'},
-                                        {'label': 'Montréal', 'value': 'MTL'},
-                                        {'label': 'San Francisco', 'value': 'SF'}
-                                    ],
-                                    value='MTL',
+                                dcc.Checklist(id="select-devices",
+                                    options=[],
                                     labelStyle={'display':'block!important'}
                                 )
                     ])
@@ -156,4 +153,9 @@ def display_page(pathname):
 if __name__=='__main__':
     print('wtf')
    # print(callbacks_req.stub.getDevices(compservice_pb2.Dummy(dummy3=1)))
-    serve(app.server, host='localhost', port=42000)
+    #serve(app.server, host='localhost', port=42000)
+    import grpc_if_methods as g
+    test= g.Server_grpc_if("localhost:42001")
+    print(test.downloadModel('bert-base-uncased'))
+    print(test.deleteModel('bert-base-uncased'))
+

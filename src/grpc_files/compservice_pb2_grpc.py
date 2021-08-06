@@ -14,10 +14,10 @@ class compserviceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.downloadModel = channel.unary_stream(
+        self.downloadModel = channel.unary_unary(
                 '/compservice/downloadModel',
                 request_serializer=compservice__pb2.Model.SerializeToString,
-                response_deserializer=compservice__pb2.Progress.FromString,
+                response_deserializer=compservice__pb2.Response.FromString,
                 )
         self.deleteModel = channel.unary_unary(
                 '/compservice/deleteModel',
@@ -110,10 +110,10 @@ class compserviceServicer(object):
 
 def add_compserviceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'downloadModel': grpc.unary_stream_rpc_method_handler(
+            'downloadModel': grpc.unary_unary_rpc_method_handler(
                     servicer.downloadModel,
                     request_deserializer=compservice__pb2.Model.FromString,
-                    response_serializer=compservice__pb2.Progress.SerializeToString,
+                    response_serializer=compservice__pb2.Response.SerializeToString,
             ),
             'deleteModel': grpc.unary_unary_rpc_method_handler(
                     servicer.deleteModel,
@@ -171,9 +171,9 @@ class compservice(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/compservice/downloadModel',
+        return grpc.experimental.unary_unary(request, target, '/compservice/downloadModel',
             compservice__pb2.Model.SerializeToString,
-            compservice__pb2.Progress.FromString,
+            compservice__pb2.Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

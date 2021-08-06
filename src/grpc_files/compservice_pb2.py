@@ -19,42 +19,10 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x11\x63ompservice.proto\"\x1b\n\x08Progress\x12\x0f\n\x07percent\x18\x01 \x01(\x05\"\x1d\n\x08Response\x12\x11\n\tcompleted\x18\x01 \x01(\x08\"\x16\n\x05Model\x12\r\n\x05\x64ummy\x18\x01 \x01(\x05\"(\n\tModelList\x12\x1b\n\x05model\x18\x01 \x03(\x0b\x32\x0c.ModelStruct\"9\n\x0bModelStruct\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06layers\x18\x02 \x01(\x05\x12\x0c\n\x04size\x18\x03 \x01(\x05\"\x19\n\x07\x44\x61taset\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1d\n\x0b\x44\x61tasetList\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1d\n\x0b\x44\x61tasetName\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1f\n\rEmbeddingData\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"$\n\x07Session\x12\x19\n\x07request\x18\x01 \x03(\x0b\x32\x08.Request\"\x99\x01\n\x07Request\x12\r\n\x05model\x18\x01 \x01(\t\x12\x11\n\tlayer_low\x18\x02 \x01(\x05\x12\x10\n\x08layer_up\x18\x03 \x01(\x05\x12\x11\n\tcomp_func\x18\x04 \x01(\t\x12\x16\n\x04\x64\x61ta\x18\x05 \x01(\x0b\x32\x08.Dataset\x12\x11\n\tbatchsize\x18\x06 \x01(\x05\x12\x1c\n\x07\x64\x65vices\x18\x07 \x01(\x0b\x32\x0b.DeviceList\"!\n\nDeviceList\x12\x13\n\x0b\x64\x65vice_name\x18\x01 \x03(\t\"\x16\n\x05\x45mpty\x12\r\n\x05\x65mpty\x18\x01 \x01(\x05\x32\xcc\x02\n\x0b\x63ompservice\x12&\n\rdownloadModel\x12\x06.Model\x1a\t.Progress\"\x00\x30\x01\x12\"\n\x0b\x64\x65leteModel\x12\x06.Model\x1a\t.Response\"\x00\x12!\n\tgetModels\x12\x06.Empty\x1a\n.ModelList\"\x00\x12)\n\x0eupdloadDataset\x12\x08.Dataset\x1a\t.Response\"\x00(\x01\x12*\n\rdeleteDataset\x12\x0c.DatasetName\x1a\t.Response\"\x00\x12%\n\x0bgetDatasets\x12\x06.Empty\x1a\x0c.DatasetList\"\x00\x12+\n\x0binf_session\x12\x08.Session\x1a\x0e.EmbeddingData\"\x00\x30\x01\x12#\n\ngetDevices\x12\x06.Empty\x1a\x0b.DeviceList\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x11\x63ompservice.proto\"\x1d\n\x08Response\x12\x11\n\tcompleted\x18\x01 \x01(\x08\"\x1a\n\x05Model\x12\x11\n\tmodelname\x18\x01 \x01(\t\"(\n\tModelList\x12\x1b\n\x05model\x18\x01 \x03(\x0b\x32\x0c.ModelStruct\"9\n\x0bModelStruct\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06layers\x18\x02 \x01(\x05\x12\x0c\n\x04size\x18\x03 \x01(\x05\"\x19\n\x07\x44\x61taset\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1d\n\x0b\x44\x61tasetList\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1d\n\x0b\x44\x61tasetName\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1f\n\rEmbeddingData\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"$\n\x07Session\x12\x19\n\x07request\x18\x01 \x03(\x0b\x32\x08.Request\"\x99\x01\n\x07Request\x12\r\n\x05model\x18\x01 \x01(\t\x12\x11\n\tlayer_low\x18\x02 \x01(\x05\x12\x10\n\x08layer_up\x18\x03 \x01(\x05\x12\x11\n\tcomp_func\x18\x04 \x01(\t\x12\x16\n\x04\x64\x61ta\x18\x05 \x01(\x0b\x32\x08.Dataset\x12\x11\n\tbatchsize\x18\x06 \x01(\x05\x12\x1c\n\x07\x64\x65vices\x18\x07 \x01(\x0b\x32\x0b.DeviceList\"!\n\nDeviceList\x12\x13\n\x0b\x64\x65vice_name\x18\x01 \x03(\t\"\x16\n\x05\x45mpty\x12\r\n\x05\x65mpty\x18\x01 \x01(\x05\x32\xca\x02\n\x0b\x63ompservice\x12$\n\rdownloadModel\x12\x06.Model\x1a\t.Response\"\x00\x12\"\n\x0b\x64\x65leteModel\x12\x06.Model\x1a\t.Response\"\x00\x12!\n\tgetModels\x12\x06.Empty\x1a\n.ModelList\"\x00\x12)\n\x0eupdloadDataset\x12\x08.Dataset\x1a\t.Response\"\x00(\x01\x12*\n\rdeleteDataset\x12\x0c.DatasetName\x1a\t.Response\"\x00\x12%\n\x0bgetDatasets\x12\x06.Empty\x1a\x0c.DatasetList\"\x00\x12+\n\x0binf_session\x12\x08.Session\x1a\x0e.EmbeddingData\"\x00\x30\x01\x12#\n\ngetDevices\x12\x06.Empty\x1a\x0b.DeviceList\"\x00\x62\x06proto3'
 )
 
 
-
-
-_PROGRESS = _descriptor.Descriptor(
-  name='Progress',
-  full_name='Progress',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='percent', full_name='Progress.percent', index=0,
-      number=1, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=21,
-  serialized_end=48,
-)
 
 
 _RESPONSE = _descriptor.Descriptor(
@@ -84,8 +52,8 @@ _RESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=50,
-  serialized_end=79,
+  serialized_start=21,
+  serialized_end=50,
 )
 
 
@@ -98,9 +66,9 @@ _MODEL = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='dummy', full_name='Model.dummy', index=0,
-      number=1, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
+      name='modelname', full_name='Model.modelname', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -116,8 +84,8 @@ _MODEL = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=81,
-  serialized_end=103,
+  serialized_start=52,
+  serialized_end=78,
 )
 
 
@@ -148,8 +116,8 @@ _MODELLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=105,
-  serialized_end=145,
+  serialized_start=80,
+  serialized_end=120,
 )
 
 
@@ -194,8 +162,8 @@ _MODELSTRUCT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=147,
-  serialized_end=204,
+  serialized_start=122,
+  serialized_end=179,
 )
 
 
@@ -226,8 +194,8 @@ _DATASET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=206,
-  serialized_end=231,
+  serialized_start=181,
+  serialized_end=206,
 )
 
 
@@ -258,8 +226,8 @@ _DATASETLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=233,
-  serialized_end=262,
+  serialized_start=208,
+  serialized_end=237,
 )
 
 
@@ -290,8 +258,8 @@ _DATASETNAME = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=264,
-  serialized_end=293,
+  serialized_start=239,
+  serialized_end=268,
 )
 
 
@@ -322,8 +290,8 @@ _EMBEDDINGDATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=295,
-  serialized_end=326,
+  serialized_start=270,
+  serialized_end=301,
 )
 
 
@@ -354,8 +322,8 @@ _SESSION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=328,
-  serialized_end=364,
+  serialized_start=303,
+  serialized_end=339,
 )
 
 
@@ -428,8 +396,8 @@ _REQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=367,
-  serialized_end=520,
+  serialized_start=342,
+  serialized_end=495,
 )
 
 
@@ -460,8 +428,8 @@ _DEVICELIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=522,
-  serialized_end=555,
+  serialized_start=497,
+  serialized_end=530,
 )
 
 
@@ -492,15 +460,14 @@ _EMPTY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=557,
-  serialized_end=579,
+  serialized_start=532,
+  serialized_end=554,
 )
 
 _MODELLIST.fields_by_name['model'].message_type = _MODELSTRUCT
 _SESSION.fields_by_name['request'].message_type = _REQUEST
 _REQUEST.fields_by_name['data'].message_type = _DATASET
 _REQUEST.fields_by_name['devices'].message_type = _DEVICELIST
-DESCRIPTOR.message_types_by_name['Progress'] = _PROGRESS
 DESCRIPTOR.message_types_by_name['Response'] = _RESPONSE
 DESCRIPTOR.message_types_by_name['Model'] = _MODEL
 DESCRIPTOR.message_types_by_name['ModelList'] = _MODELLIST
@@ -514,13 +481,6 @@ DESCRIPTOR.message_types_by_name['Request'] = _REQUEST
 DESCRIPTOR.message_types_by_name['DeviceList'] = _DEVICELIST
 DESCRIPTOR.message_types_by_name['Empty'] = _EMPTY
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
-
-Progress = _reflection.GeneratedProtocolMessageType('Progress', (_message.Message,), {
-  'DESCRIPTOR' : _PROGRESS,
-  '__module__' : 'compservice_pb2'
-  # @@protoc_insertion_point(class_scope:Progress)
-  })
-_sym_db.RegisterMessage(Progress)
 
 Response = _reflection.GeneratedProtocolMessageType('Response', (_message.Message,), {
   'DESCRIPTOR' : _RESPONSE,
@@ -615,8 +575,8 @@ _COMPSERVICE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=582,
-  serialized_end=914,
+  serialized_start=557,
+  serialized_end=887,
   methods=[
   _descriptor.MethodDescriptor(
     name='downloadModel',
@@ -624,7 +584,7 @@ _COMPSERVICE = _descriptor.ServiceDescriptor(
     index=0,
     containing_service=None,
     input_type=_MODEL,
-    output_type=_PROGRESS,
+    output_type=_RESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),

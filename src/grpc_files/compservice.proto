@@ -2,7 +2,7 @@ syntax = "proto3";
 
 service compservice {
     
-    rpc downloadModel(Model) returns (stream Progress) {}
+    rpc downloadModel(Model) returns (Response) {}
     rpc deleteModel(Model) returns (Response) {}
     rpc getModels(Empty) returns (ModelList) {}
 
@@ -17,15 +17,12 @@ service compservice {
 
 }
 
-message Progress {
-    int32 percent = 1;
-}
 message Response {
     bool completed = 1;
 }
 
 message Model {
-    int32 dummy = 1;
+    string modelname = 1;
 }
 message ModelList {
     repeated ModelStruct model = 1;
