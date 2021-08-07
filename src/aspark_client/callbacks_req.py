@@ -70,8 +70,97 @@ def model_search(search_value, options):
     return_models = get_close_matches(search_value, _model_list, 10,0.5)
     options = [{'label': i, 'value': i} for i in return_models]
     return options
-    
 
+### DOWNLOAD ###
+@app.callback(
+    Output('download-model-button', 'disabled'),
+    Input('model-dropdown', 'value')
+)
+def activate_download_button(value):
+    """
+    Activates the Download button upon selection of a Model from the repository
+    """
+    disabled = False
+    if not value:
+        disabled=True
+    return disabled
+@app.callback(
+    Output('download-model-button', 'value'),
+    Input('download-model-button', 'n_clicks'),
+    State('model-dropdown', 'value')
+)
+def download_model(n_clicks, value):
+    if not n_clicks:
+        raise dash.exceptions.PreventUpdate
+    return request_server.downloadModel(value).completed
+    
+### DROPDOWN ###
+@app.callback(
+    Output('block-models', 'options'),
+    Input('download-model-button', 'value'),
+    Input('delete-model-button', 'value'),
+    Input('block-models', 'label')
+)
+def update_model_list(valuedown, valuedel, label):
+    if (not valuedown == False):
+        options = [{'label': i, 'value': i} for i in [str(i) for i in request_server.getModels()]] 
+    return options
+@app.callback(
+    Output('block-models','value'),
+    Input('delete-model-button', 'n_clicks')
+)
+def clear_model_dropdown_selection(n_clicks):
+    return None
+
+### DELETE ###
+@app.callback(
+    Output('delete-model-button', 'style'),
+    Input('block-models', 'value'),
+    State('delete-model-button', 'style')
+)
+def activate_delete_button(value, style):
+    """
+    Activates the delete button upon selection of a Model
+    """
+    if not value and not 'visibility' in style:
+        style['visibility']='hidden'
+    if value and 'visibility' in style:
+        style.pop('visibility')
+    return style
+@app.callback(
+    Output('delete-model-button', 'value'),
+    Input('delete-model-button', 'n_clicks'),
+    State('block-models', 'value')
+)
+def delete_model(n_clicks, value):
+    if not n_clicks:
+        raise dash.exceptions.PreventUpdate
+    return request_server.deleteModel(value).completed
+
+### LAYER SLIDER ###
+@app.callback(
+    Output('layer-slider', 'disabled'),
+    Input('block-models', 'value')
+)
+def activate_slider(value):
+    return True if not value else False
+@app.callback(
+    Output('layer-slider', 'max'),
+    Input('block-models', 'value')
+)
+def update_layer_slider(value):
+    if not value:
+        raise dash.exceptions.PreventUpdate
+    _models=request_server.getModels()
+    return _models[value]['layers'] 
+@app.callback(
+    Output('layer-slider', 'marks'),
+    Input('layer-slider', 'max')
+)
+def update_layer_slider_marks(max):
+    if not max:
+        raise dash.exceptions.PreventUpdate
+    return {i:{'label':str(i)} for i in range(1,max+1)}
 
 ########################################
 #####  DATASET SELECTION CALLBACKS #####
@@ -124,6 +213,8 @@ def parse_file_ul(contents, filename):
     Input('file-ul-req', 'contents'),
     State('file-ul-req', 'filename'))
 def update_data_ul(list_of_contents, list_of_names):
+    if not list_of_contents:
+        raise dash.exceptions.PreventUpdate
     if list_of_contents is not None:
         print(list_of_names)
         print(type(list_of_contents))
@@ -146,7 +237,6 @@ def update_data_ul(list_of_contents, list_of_names):
 )
 def update_devices_list(options):
     options = [{'label': i, 'value': i} for i in [str(i) for i in request_server.getDevices()]]
-    print(options)
     return options
 
 @app.callback(
@@ -154,6 +244,8 @@ def update_devices_list(options):
     Input('select-devices', 'value')
 )
 def update_devices_list(value):
+    if not value:
+        raise dash.exceptions.PreventUpdate
     if "cpu" in value:
         value = 'cpu'
     return value

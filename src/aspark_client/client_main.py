@@ -42,29 +42,28 @@ app.layout = html.Div([
                                     multi=False,
                                     style={"min-width":"75%", "display":"inline-block"}
                                 ),
-                                html.Button(children=["Download"],
+                                html.Button(id='download-model-button',
+                                    children=["Download"],
+                                    disabled=True,
                                     style={"display": "inline-block","position":"relative"}
                                 )
                             ]),
+                            html.Div(id='loading', children=[]),
+                            html.Div(id='download-state', title='', style={'hidden':True}),
                             html.Div([
                                 "Select Model",
-                                dcc.RadioItems(
-                                    options=[
-                                        {'label': 'New York City', 'value': 'NYC'},
-                                        {'label': 'Montréal', 'value': 'MTL'},
-                                        {'label': 'San Francisco', 'value': 'SF'}
-                                    ],
-                                    value='MTL',
+                                dcc.RadioItems( id='block-models',
+                                    options=[],
                                     labelStyle={'display':'block!important'}
                                 ),
-                                html.Button(children=["Delete"],
-                                    style={"display": "inline-block","position":"relative"}
-                                )  
+                                html.Button(id="delete-model-button",children=["Delete"],
+                                    style={"display": "inline-block","position":"relative",'visibility':'hidden'},
+                                ),
                             ]),
                             
                             html.Div(id="layer-div", children=[
                                 html.Label('Layer selector'),
-                                dcc.RangeSlider(
+                                dcc.RangeSlider(id='layer-slider',
                                     min=1,
                                     max=12,
                                     step=1,
@@ -153,9 +152,13 @@ def display_page(pathname):
 if __name__=='__main__':
     print('wtf')
    # print(callbacks_req.stub.getDevices(compservice_pb2.Dummy(dummy3=1)))
-    #serve(app.server, host='localhost', port=42000)
-    import grpc_if_methods as g
-    test= g.Server_grpc_if("localhost:42001")
-    print(test.downloadModel('bert-base-uncased'))
-    print(test.deleteModel('bert-base-uncased'))
+    serve(app.server, host='localhost', port=42000)
+    """    import grpc_if_methods as g
+        test= g.Server_grpc_if("localhost:42001")
+        print(test.downloadModel('bert-base-uncased'))
+        print(test.downloadModel('bert-base-cased'))
+
+        print(test.getModels())
+        print(test.deleteModel('bert-base-uncased'))
+        print(test.deleteModel('bert-base-cased')) """
 

@@ -9,8 +9,10 @@ class Server_grpc_if():
         return self.stub.downloadModel(compservice_pb2.Model(modelname=model)) 
     def deleteModel(self, model):
         return self.stub.deleteModel(compservice_pb2.Model(modelname=model)) 
-    def getModels(self, Empty):
-        pass 
+    def getModels(self):
+        _response = self.stub.getModels(compservice_pb2.Empty(empty=0)).model
+        _response = {i.name : {'layers':i.layers, 'size':i.size} for i in _response}
+        return _response
 
     def updloadDataset(self, Dataset):
         pass 

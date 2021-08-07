@@ -47,7 +47,7 @@ class compserviceStub(object):
         self.inf_session = channel.unary_stream(
                 '/compservice/inf_session',
                 request_serializer=compservice__pb2.Session.SerializeToString,
-                response_deserializer=compservice__pb2.EmbeddingData.FromString,
+                response_deserializer=compservice__pb2.EmbeddingDataSet.FromString,
                 )
         self.getDevices = channel.unary_unary(
                 '/compservice/getDevices',
@@ -143,7 +143,7 @@ def add_compserviceServicer_to_server(servicer, server):
             'inf_session': grpc.unary_stream_rpc_method_handler(
                     servicer.inf_session,
                     request_deserializer=compservice__pb2.Session.FromString,
-                    response_serializer=compservice__pb2.EmbeddingData.SerializeToString,
+                    response_serializer=compservice__pb2.EmbeddingDataSet.SerializeToString,
             ),
             'getDevices': grpc.unary_unary_rpc_method_handler(
                     servicer.getDevices,
@@ -275,7 +275,7 @@ class compservice(object):
             metadata=None):
         return grpc.experimental.unary_stream(request, target, '/compservice/inf_session',
             compservice__pb2.Session.SerializeToString,
-            compservice__pb2.EmbeddingData.FromString,
+            compservice__pb2.EmbeddingDataSet.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

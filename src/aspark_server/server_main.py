@@ -17,6 +17,7 @@ from irequest.composition import *
 
 
 WORKDIR = Path(__file__).parent             #Program base file tree
+MODEL_LIST_JSON = Path.joinpath(WORKDIR, f"irequest/models/stored_models.json") 
 ### SERVER INTERFACE
 
 
@@ -43,12 +44,14 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         self.ls_dev.append(devices.Dev(  name = 'cpu'
                                     ,n_cores = os.cpu_count()
                                     ,device_type = "cpu"))   #add cpu to the device list
-        self.model_list = self._get_models_from_file()
+        #Persistent Model list JSON storage
+        self.model_list = self._get_models_from_file()       #Loads model list from file
+        self._models_downloading = {}                        #Download temporary record
     
     def _get_models_from_file(self):
         data = {}
-        if Path('stored_models.json').exists():
-            with open('stored_models.json', 'r') as data_file:
+        if MODEL_LIST_JSON.exists():
+            with open(MODEL_LIST_JSON, 'r') as data_file:
                 data = json.load(data_file)
 
         return data
@@ -61,51 +64,80 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
             model : str - model name, acording to Huggingface's respository.
         """
         model = request.modelname
-        model_cache = Path.joinpath(WORKDIR, f"irequest/models/cache/{model}{random.randint(1000,9999)}")    #Local model cache
-        model_folder = Path.joinpath(WORKDIR, f"irequest/models/{model}")
-        Path(model_folder).mkdir(parents=True, exist_ok=True)
+        if model in self._models_downloading:                                  #GUARD
+            if 'downloading' in self._models_downloading[model]:
+                _lock = self._models_downloading[model]['downloading']
+                try:
+                    _lock.acquire()
+                finally:
+                    _lock.release()                       
+                    return compservice_pb2.Response(completed=True)
 
-        model_file = Path(Path.joinpath(model_folder, "pytorch_model.bin" ))
-        if not model_file.exists():    
-            tmodel = ts.AutoModel.from_pretrained(model, cache_dir=model_cache)  
-            try:
-                tmodel.save_pretrained(model_folder)        #Save Model
-            except FileExistsError as e:
-                print(e)
-                return compservice_pb2.Response(completed=False)
+        if not model in self.model_list:            
+            lock = threading.Lock()
+            self._models_downloading[model]={'downloading':lock}
             
-        tokenizer_file = Path(Path.joinpath(model_folder, "tokenizer.json"))       
-        if not tokenizer_file.exists():
-            ttokenizer = ts.AutoTokenizer.from_pretrained(model, cache_dir=model_cache) 
-            try:
+            #Local model cache
+            model_cache = Path.joinpath(WORKDIR, f"irequest/models/cache/{model}{random.randint(1000,9999)}")   
+            model_folder = Path.joinpath(WORKDIR, f"irequest/models/{model}")
+            try: 
+                lock.acquire()
+                
+                Path(model_folder).mkdir(parents=True, exist_ok=True)
+                tmodel = ts.AutoModel.from_pretrained(model, cache_dir=model_cache)  
+                tmodel.save_pretrained(model_folder)        #Save Model
+                _tmodel_conf = tmodel.config.to_diff_dict()
+                _tmodel_conf['num_hidden_layers'] = tmodel.config.num_hidden_layers
+                _tmodel_conf['num_param'] = tmodel.num_parameters() #Add number of parameters to info
+                self.model_list[model]= _tmodel_conf
+                #lock?
+                with open(MODEL_LIST_JSON, 'w+') as stored_models:
+                    json.dump(self.model_list, stored_models)
+
+                ttokenizer = ts.AutoTokenizer.from_pretrained(model, cache_dir=model_cache) 
                 ttokenizer.save_pretrained(model_folder)    #Save Tokenizer  
             except FileExistsError as e:
                 print(e)
-                return compservice_pb2.Response(completed=False)
-        try:
-            shutil.rmtree(model_cache)                      #Remove cache folder
-        except FileNotFoundError as e:
-            print(f"Could not remove {model_cache}: File not found.")
+            finally:
+                lock.release()
+                self._models_downloading.pop(model)
 
-        self.model_list[model]= tmodel.config.to_diff_dict()
-        with open(Path.joinpath(WORKDIR, f"irequest/models/stored_models.json"), 'w+') as stored_models:
-            json.dump(self.model_list, stored_models)
+            if model_cache.exists():
+                try:
+                    shutil.rmtree(model_cache)                      #Remove cache folder
+                except FileNotFoundError as e:
+                    print(f"Could not remove {model_cache}: File not found.")
 
         return compservice_pb2.Response(completed=True)
 
     def deleteModel(self, request, context):
         model = request.modelname
         try:
+            if model in self.model_list:
+                self.model_list.pop(model)
+                 #lock?
+                with open(MODEL_LIST_JSON, 'w+') as stored_models:
+                    json.dump(self.model_list, stored_models)
+        
             shutil.rmtree(Path.joinpath(WORKDIR, f"irequest/models/{model}"))   #Remove model folder
         except FileNotFoundError as e:
             print(e)
             print(f"Could not remove {model}: File not found.")
             return compservice_pb2.Response(completed=False)
-        self.model_list.pop(model)
-        with open(Path.joinpath(WORKDIR, f"irequest/models/stored_models.json"), 'w+') as stored_models:
-            json.dump(self.model_list, stored_models)
+        
         return compservice_pb2.Response(completed=True)
         
+        
+    def getModels(self, request, context):
+        models_response = compservice_pb2.ModelList()
+        _model_list = []
+        for modelcfg in self.model_list.values():
+            _model_list.append(compservice_pb2.ModelStruct(name=modelcfg['_name_or_path'],
+                                                        layers=modelcfg['num_hidden_layers'],
+                                                        size = modelcfg['num_param']))
+        
+        models_response.model.extend(_model_list)
+        return models_response
 
     def upl_dataset():
         pass

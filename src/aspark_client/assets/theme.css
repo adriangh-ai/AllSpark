@@ -110,6 +110,13 @@ h1, h2, h3, h4, h5, h6 {
       color :#a4e0da;
       transition-duration: 0.1s;    
   }
+  .button:disabled,
+  button:disabled {
+    background-color: var(--background3);
+    border:1px;
+    border-color : var(--background2);
+    color: rgb(199, 199, 199);
+  }
 
   /*Slider
   __________________________________________________ */
