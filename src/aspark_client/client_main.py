@@ -20,6 +20,7 @@ from waitress import serve
 
 app.title = "AllSpark"
 app.layout = html.Div([
+    dcc.Store(id='tab-count', storage_type='session', data=1),
     html.Div(
         className="app-index-header",
         children=[
@@ -32,7 +33,11 @@ app.layout = html.Div([
         children = [dcc.Tabs(id="main-tab",className="main-tabs", value='tab-1', children=[
             dcc.Tab(label='Session', value='tab-1', className='main-tabs', children=[
                 html.Div(id = "block-req-list", className='tab-block', children=[
-                    "aquí es donde se pone la lista de requestst"
+                    "aquí es donde se pone la lista de requestst",
+                    html.Div('memory'),
+                    html.Div( children=[
+                        html.Table(id='request-list-table', children=[])
+                    ])
                 ]),
                 html.Div(id = "block-model", className='tab-block', children=[
                     html.H3('Model Selection', style={"align":"centered"}),
@@ -95,14 +100,21 @@ app.layout = html.Div([
                             multiple=False,
                             max_size=-1
                         ),
-                        html.Div(id='display-ul-data', children=[])
+                        html.Div(id='display-ul-data', children=[]),
+                        html.Div(id='bacthsize-div', children=["Batchsize:",
+                            dcc.Input(id='batchsize-input'
+                                     ,type='number'
+                                     ,placeholder='Enter the batchsize...'
+                                     ,min=1
+                                     ,value=16)
+                        ])
                     ])
                 ]),
-                html.Div(id = "block-composition", className='tab-block', children=[
+                html.Div(className='tab-block', children=[
                     html.H3('Composition Method'),
                     html.Div([
                                 "Choose Composition Method",
-                                dcc.RadioItems(
+                                dcc.RadioItems(id = "block-composition",
                                     options=[
                                         {'label': 'CLS', 'value': 'cls'},
                                         {'label': 'Average', 'value': 'avg'},
@@ -129,7 +141,10 @@ app.layout = html.Div([
                     ])
                 ]),
                 html.Div(children=[
-                    html.Button('Add Request', id="add-tab", n_clicks=0, name="nonse")
+                    html.Button('GO TAB', id="add-tab", n_clicks=0, name="nonse")
+                ]),
+                html.Div(children=[
+                    html.Button('Add Request', id="add-request", n_clicks=0, disabled=True)
                 ])
             ])
         ])
@@ -151,7 +166,7 @@ def display_page(pathname):
 
 if __name__=='__main__':
     print('wtf')
-   # print(callbacks_req.stub.getDevices(compservice_pb2.Dummy(dummy3=1)))
+
     serve(app.server, host='localhost', port=42000)
     """    import grpc_if_methods as g
         test= g.Server_grpc_if("localhost:42001")

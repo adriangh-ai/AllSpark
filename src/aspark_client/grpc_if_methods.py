@@ -25,6 +25,6 @@ class Server_grpc_if():
         pass 
     def getDevices(self):
         device_list = self.stub.getDevices(compservice_pb2.Empty(empty=0))
-        for device in device_list.device_name:
+        for device in device_list.dev:
             yield device
 

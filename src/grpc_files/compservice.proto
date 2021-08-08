@@ -70,7 +70,13 @@ message Request {
 }
 
 message DeviceList {
-    repeated string device_name = 1;
+    message Device {
+        string device_name = 1;
+        string id = 2;
+        int32 memory_total=3;
+        int32 memory_free = 4;
+    }
+    repeated Device dev = 1;
 }
 
 message Empty {

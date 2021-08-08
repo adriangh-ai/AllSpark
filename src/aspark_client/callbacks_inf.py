@@ -10,12 +10,25 @@ class inference_tab():
     This class contains the details of the Inference Tab it represents,
     identified by the index argument.
     """
-    def __init__(self, index):
+    def __init__(self
+                ,index
+                ,model
+                ,dataset
+                ,filename
+                ,text_column
+                ,layer_low
+                ,layer_up
+                ,comp_func
+                ,batchsize
+                ,devices):
+
         self.index=index
-        self.model=[]
-        self.dataset = []
-        self.layer_low = 12
-        self.layer_up = 12
-        self.comp_fund = 'cls'
-        self.batchsize = 16
-        self.devices = ['cpu']
+        self.model=model
+        self.dataset = dataset
+        self.filename= filename
+        self.text_column=text_column
+        self.layer_low = layer_low
+        self.layer_up = layer_up
+        self.comp_func = comp_func
+        self.batchsize = batchsize
+        self.devices = devices

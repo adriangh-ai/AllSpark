@@ -18,15 +18,8 @@ from irequest.composition import *
 
 WORKDIR = Path(__file__).parent             #Program base file tree
 MODEL_LIST_JSON = Path.joinpath(WORKDIR, f"irequest/models/stored_models.json") 
+
 ### SERVER INTERFACE
-
-
-###Initialisation scripts
-#Folders and config files
-
-
-
-
 
 class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
     """ 
@@ -37,11 +30,13 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         Computing devices:
         If cuda is available, fills the gpus, then adds cpu.
         """
-        self.ls_dev = [devices.Dev(  name = f"cuda:{i}" 
-                                ,device_type = "gpu") for i in 
+        self.ls_dev = [devices.Dev(  name = torch.cuda.get_device_name(i)
+                                    ,id = f"cuda:{i}"
+                                    ,device_type = "gpu") for i in 
                                         range(torch.cuda.device_count()) if torch.cuda.is_available()]
 
         self.ls_dev.append(devices.Dev(  name = 'cpu'
+                                    ,id = 'cpu'
                                     ,n_cores = os.cpu_count()
                                     ,device_type = "cpu"))   #add cpu to the device list
         #Persistent Model list JSON storage
@@ -85,17 +80,17 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
                 
                 Path(model_folder).mkdir(parents=True, exist_ok=True)
                 tmodel = ts.AutoModel.from_pretrained(model, cache_dir=model_cache)  
-                tmodel.save_pretrained(model_folder)        #Save Model
+                tmodel.save_pretrained(model_folder)                         #Save Model
                 _tmodel_conf = tmodel.config.to_diff_dict()
                 _tmodel_conf['num_hidden_layers'] = tmodel.config.num_hidden_layers
-                _tmodel_conf['num_param'] = tmodel.num_parameters() #Add number of parameters to info
+                _tmodel_conf['num_param'] = tmodel.num_parameters()          #Add number of parameters to info
                 self.model_list[model]= _tmodel_conf
                 #lock?
                 with open(MODEL_LIST_JSON, 'w+') as stored_models:
                     json.dump(self.model_list, stored_models)
 
                 ttokenizer = ts.AutoTokenizer.from_pretrained(model, cache_dir=model_cache) 
-                ttokenizer.save_pretrained(model_folder)    #Save Tokenizer  
+                ttokenizer.save_pretrained(model_folder)                     #Save Tokenizer  
             except FileExistsError as e:
                 print(e)
             finally:
@@ -104,7 +99,7 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
 
             if model_cache.exists():
                 try:
-                    shutil.rmtree(model_cache)                      #Remove cache folder
+                    shutil.rmtree(model_cache)                               #Remove cache folder
                 except FileNotFoundError as e:
                     print(f"Could not remove {model_cache}: File not found.")
 
@@ -145,7 +140,14 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
     
     def getDevices(self, request, context):
         devices = compservice_pb2.DeviceList()
-        devices.device_name.extend([i.name for i in self.ls_dev])
+        _ls_dev = []
+        for _device in self.ls_dev:
+            _ls_dev.append(devices.Device(device_name=_device.name, 
+                                            id= _device.id,
+                                            memory_total=_device.memory, 
+                                            memory_free=_device.mem_update()))
+
+        devices.dev.extend(_ls_dev)
         return devices
 
 def serve():

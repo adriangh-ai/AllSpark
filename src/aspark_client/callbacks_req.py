@@ -42,16 +42,52 @@ _model_list = _modelrepo_update()   #Runs at startup, gets the up to date list o
 
 request_server = grpc_if_methods.Server_grpc_if("localhost:42001") #Instanciates the grpc interface class
 
-
-_tab_record = {1:callbacks_inf.inference_tab(1)}                   # Record where the Inference Tabs are stored
+tab_record = {}    # Record where the Inference Tabs are stored
 
 
 #############################################################################################################
 ###################################### INDEX DASH CALLBACKS #################################################
 #############################################################################################################
-""" @app.callback(
-    Output({'type':'request-list', 'index': MATCH})
-) """
+
+######################
+#### REQUEST TABLE####
+######################
+@app.callback(
+    Output('request-list-table', 'children'),
+    Input('add-request', 'n_clicks')
+)
+def fill_request_table(n_clicks):
+    _children = []
+    if len(tab_record) > 0:
+        _children.append(
+            html.Tr(children=[
+                html.Th('Model'),
+                html.Th('Layers'),
+                html.Th('Dataset'),
+                html.Th('Column'),
+                html.Th('Comp. F.'),
+                html.Th('Batchsize'),
+                html.Th('Devices'),
+                html.Th('')
+            ])
+        )
+        for request in tab_record.values():
+            _children.append(
+                html.Tr(children=[
+                    html.Td(str(request.model)),
+                    html.Td(f'{request.layer_low} - {request.layer_up}'),
+                    html.Td(str(request.filename)),
+                    html.Td(str(request.text_column)),
+                    html.Td(str(request.comp_func)),
+                    html.Td(str(request.batchsize)),
+                    html.Td(str(request.devices)),
+                    html.Td(children=[
+                        html.Button('REMOVE'
+                                    ,id= {'type':'request-delete-button','index': request.index})
+                    ])
+                ])
+            )
+    return _children
 #########################
 #### MODEL SELECTION ####
 #########################
@@ -183,18 +219,24 @@ def parse_file_ul(contents, filename):
         if 'csv' in filename:
             df = pandas.read_csv(io.StringIO(decoded.decode('utf-8', errors='replace')), nrows=10, sep='\s+')
         if 'json' in filename:
-            df = pandas.read_json(io.StringIO(decoded.decode('utf-8')), lines=True)
+            df = pandas.read_json(io.StringIO(decoded.decode('utf-8'))) #lines? ^ separator?
         if 'xls' in filename:
             df = pandas.read_excel(io.BytesIO(decoded))
 
     except Exception as e:
         print(e)
+        
+    return df
+    
+def make_table(contents, df, filename):
+    if  df.empty:
         return html.Div([ 'There was an error processing the file.'])
     if  not df.empty:
         table_fragment =html.Div([
         html.P('Select the column with the sentences to process'),
         html.H5(filename),
         dash_table.DataTable(
+            id = 'dataset-table',
             data = df.head(10).to_dict('records'),
             columns = [{'name':i, 'id':i, 'selectable':True} for i in df.columns],
             style_table={'overflowY': 'scroll'},
@@ -221,12 +263,23 @@ def update_data_ul(list_of_contents, list_of_names):
         print(len(list_of_contents))
         children = [
             #parse_file_ul(c,d) for c,d in zip(list_of_contents, list_of_names)]
-            parse_file_ul(list_of_contents, list_of_names)]
+            make_table(list_of_contents,
+                        parse_file_ul(list_of_contents, list_of_names),
+                        list_of_names)]
         return children
 
 ###############################
 #### COMPOSITION SELECTION ####
 ###############################
+""" @app.callback(
+    Output('block-composition', 'options'),
+    Input('block-model', 'value'),
+    State('block-composition', 'options')
+)
+def adjust_comp_selection_to_model(value,options):
+    
+    pass #TODO """
+
 
 ###############################
 #### COMPUTING DEVICES SEL ####
@@ -236,7 +289,8 @@ def update_data_ul(list_of_contents, list_of_names):
     Input('select-devices', 'options')
 )
 def update_devices_list(options):
-    options = [{'label': i, 'value': i} for i in [str(i) for i in request_server.getDevices()]]
+    options = [{'label': f"{dev.device_name} ID: {dev.id}", 
+                'value': dev.id} for dev in [i for i in request_server.getDevices()]]
     return options
 
 @app.callback(
@@ -249,7 +303,76 @@ def update_devices_list(value):
     if "cpu" in value:
         value = 'cpu'
     return value
-###############################
+
+#####################
+#### ADD REQUEST ####
+#####################
+@app.callback(
+    Output('add-request', 'value'),
+    Input('add-request', 'n_clicks'),
+    State('block-models', 'value'),
+    State('layer-slider', 'min'),
+    State('layer-slider', 'max'),
+    State('file-ul-req', 'filename'),
+    State('file-ul-req', 'contents'),
+    State('dataset-table', 'selected_columns'),
+    State('batchsize-input', 'value'),
+    State('block-composition', 'value'),
+    State('select-devices', 'value'),
+    State('tab-count', 'data')
+)
+def add_request(n_clicks
+                ,model
+                ,layerlow
+                ,layerup
+                ,filename
+                ,contents
+                ,sel_columns
+                ,valuebatch
+                ,valuecomp
+                ,valuedev
+                ,tab_index):
+    if not (model and sel_columns and valuecomp and valuedev):
+        raise dash.exceptions.PreventUpdate
+
+    _request = callbacks_inf.inference_tab(index=tab_index
+                                            ,model=model
+                                            ,dataset=parse_file_ul(contents,filename)
+                                            ,filename=filename
+                                            ,text_column=sel_columns
+                                            ,layer_low=layerlow
+                                            ,layer_up=layerup
+                                            ,comp_func=valuecomp
+                                            ,batchsize=valuebatch
+                                            ,devices=valuedev)
+    tab_record[tab_index]= _request
+    return tab_index + 1
+    
+@app.callback(
+    Output('add-request', 'disabled'),
+    Input('block-models', 'value'),
+    Input('dataset-table', 'selected_columns'),
+    Input('block-composition', 'value'),
+    Input('select-devices', 'value')
+)
+def activate_add_request(model
+                        ,sel_columns
+                        ,valuecomp
+                        ,valuedev):
+    _state= False
+    if not (model and sel_columns and valuecomp and valuedev):
+        return True
+    return _state
+
+@app.callback(
+    Output('tab-count', 'data'),
+    Input('add-request', 'value')
+)
+def update_tab_index(value):
+    if not value:
+        raise dash.exceptions.PreventUpdate
+    return value
+    
 
 
 ##############################pariah
@@ -263,7 +386,8 @@ def add_inf_tab(n_clicks, children):
     new_tab = dcc.Tab(label = 'Inference',className='main-tabs', children=[
                         html.Div( id={'type':'inf-tab', 'index': n_clicks },children=[
                             html.P('this is al there is inside'),
-                            html.Button('will this work', id= {'type':'button-new', 'index': n_clicks }, n_clicks=0, name='hmm')
+                            html.Button('will this work', id= {'type':'button-new'
+                                                                ,'index': n_clicks }, n_clicks=0, name='hmm')
                         ])
             ])
     children.append(new_tab)

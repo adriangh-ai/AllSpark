@@ -11,6 +11,7 @@ class Dev:
     not release the memory when it deallocates the object.
     """
     name: str                               #Device name (cpu, cuda:0,1...)
+    id: str                                 #Device CUDA id
     n_cores : int = 1                       #N of cores
     memory : int = field(init=False)        #Total memory size
     memory_free : int = field(init=False)   #Free memory (Total - (reserved - unused))
@@ -18,17 +19,20 @@ class Dev:
     lock : bool = False                     #Lock device to session
 
     def __post_init__(self):
-        self.memory = torch.cuda.get_device_properties(self.name).total_memory if self.device_type=='gpu' else psutil.virtual_memory()[0]  #Total memory
-        self.memory_free = self.mem_update()
+        self.memory = int(round(self._mem_available()/1024/1024/1024))
+        self.memory_free = int(round(self.mem_update()))
     
     def mem_update(self):
         """
         Updates memory_free with the current memory available. Note that it can not take into account
         memory used by other processes outside of pytorch for cuda devices.
         """
-        self.memory_free = (self.memory - (torch.cuda.memory_reserved(self.name) - torch.cuda.memory_allocated(self.name))
-                                         ) if self.device_type=='gpu' else psutil.virtual_memory()[1]
+        self.memory_free = int(round(self.memory - (torch.cuda.memory_reserved(self.id) - torch.cuda.memory_allocated(self.id))
+                                         ) if self.device_type=='gpu' else psutil.virtual_memory()[1]/1024/1024/1024)
         return self.memory_free
+    def _mem_available(self):
+        return torch.cuda.get_device_properties(self.id
+                    ).total_memory if self.device_type=='gpu' else psutil.virtual_memory()[0]  #Total memory
 
 if __name__ == "__main__":
     """
