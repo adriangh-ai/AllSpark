@@ -34,8 +34,8 @@ message ModelStruct {
 
 message Dataset {
     message Sentence {
-        string sentence = 1;
         int32 position = 2;
+        string sentence = 1;
     }
     repeated Sentence sentence_data = 1;
 }
@@ -66,7 +66,7 @@ message Request {
     string comp_func = 4;
     Dataset data = 5;
     int32 batchsize = 6;
-    DeviceList devices = 7;
+    DeviceNames devices = 7;
 }
 
 message DeviceList {
@@ -78,7 +78,11 @@ message DeviceList {
     }
     repeated Device dev = 1;
 }
+message DeviceNames {
+    repeated string name =1;
+}
 
 message Empty {
     int32 empty = 1;
 }
+

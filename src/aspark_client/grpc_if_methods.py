@@ -22,7 +22,7 @@ class Server_grpc_if():
         pass 
 
     def inf_session(self, Session):
-        pass 
+        return self.stub.inf_session(Session)
     def getDevices(self):
         device_list = self.stub.getDevices(compservice_pb2.Empty(empty=0))
         for device in device_list.dev:

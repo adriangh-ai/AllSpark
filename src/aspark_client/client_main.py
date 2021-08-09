@@ -34,7 +34,7 @@ app.layout = html.Div([
             dcc.Tab(label='Session', value='tab-1', className='main-tabs', children=[
                 html.Div(id = "block-req-list", className='tab-block', children=[
                     "aquí es donde se pone la lista de requestst",
-                    html.Div('memory'),
+                    html.Div(id='memory-gauge-div'),
                     html.Div( children=[
                         html.Table(id='request-list-table', children=[])
                     ])
@@ -57,6 +57,7 @@ app.layout = html.Div([
                             html.Div(id='download-state', title='', style={'hidden':True}),
                             html.Div([
                                 "Select Model",
+                                dcc.Store(id='model-data-store'),
                                 dcc.RadioItems( id='block-models',
                                     options=[],
                                     labelStyle={'display':'block!important'}

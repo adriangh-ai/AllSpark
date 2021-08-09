@@ -137,7 +137,10 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
     def upl_dataset():
         pass
 
-    
+    def inf_session(self, request, context):
+        print(request.request[0].model)
+        return super().inf_session(request, context)
+
     def getDevices(self, request, context):
         devices = compservice_pb2.DeviceList()
         _ls_dev = []
