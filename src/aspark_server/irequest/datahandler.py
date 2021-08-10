@@ -1,9 +1,8 @@
 from nltk import tokenize
 
 class datawrapper():
-    def __init__(self, dataclass):
-        self._dataclass = dataclass
-
+    def __init__(self):
+        pass
     def sentence_split(text):
         """
         Splits the input in sentences using NLTK library
@@ -47,14 +46,11 @@ if __name__ == "__main__":
     """
         TEST
     """
-    print(sentence_split(list(map(clean_markup,
+   
+    print(datawrapper.sentence_split(list(map(datawrapper.clean_markup,
     ["""<br>The AllSpark is an ancient and infinitely limitless, powerful Cybertronian artifact</br>. 
     It has the power to bring lifeless technology to life by turning it into sentient, autonomous Cyberronians.
     """]
     ))))
-    print(sentence_split(list(map(clean_markup,
-    ["""<br>El AllSpark es un antiguo e inifinitamente ilimitado, poderoso artefacto Cybertronian</br>. 
-    Tiene el poder de traer la tecnología al a vida transformándolo en un ser autónomo, Cyberronian.
-    """]
-    ))))
+    
 

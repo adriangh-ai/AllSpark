@@ -79,10 +79,12 @@ class Fcomp(Compbase):
         return resultado
     
     def _sentencefunc(self, sentence):
-        _result = self._gencompf(sentence[:2])
+        _result = sentence[0]
+        if len(sentence)>1:
+            _result = self._gencompf(sentence[:2])
 
-        for v_n in sentence[2:]:
-            _result = self._gencompf(torch.stack([_result, v_n]))
+            for v_n in sentence[2:]:
+                _result = self._gencompf(torch.stack([_result, v_n]))
 
         return _result
     
@@ -90,7 +92,7 @@ class Fcomp(Compbase):
         #try parallelism
         output = torch.stack([torch.stack([self._sentencefunc(layer) for layer in sentence]) for sentence in output])
         output = torch.mean(output,1)
-        
+        print(output)
         return output
 
 

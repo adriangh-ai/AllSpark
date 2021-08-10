@@ -146,7 +146,7 @@ def add_inf_tab(n_clicks, children):
         _message = []
         
         for index,row in _dataset.iterrows():
-            _message.append(request.data.Sentence(position=index
+            _message.append(request.data.Sentence(position=index+1
                                                 ,sentence=row[tab_record[i].text_column].item()))
 
         request.data.sentence_data.extend(_message)

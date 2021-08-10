@@ -3,7 +3,9 @@ import transformers as ts
 import os, random, shutil, psutil
 import threading
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from distributed import Client
 
+import modin.pandas as pd
 import json
 import sys
 from pathlib import Path
@@ -11,6 +13,7 @@ sys.path.append(str(Path(__file__).parents[2]))
 
 import grpc
 from src.grpc_files import compservice_pb2_grpc, compservice_pb2
+from google.protobuf.json_format import MessageToDict
 
 from irequest import devices, session
 from irequest.composition import *
@@ -138,7 +141,13 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         pass
 
     def inf_session(self, request, context):
-        print(request.request[0].model)
+        print(type(request))
+        sessionData = [MessageToDict(message) for message in request.request]
+        print('did it do ti?')
+        for request in sessionData:
+            request['data']['sentenceData'] = pd.DataFrame(request['data']['sentenceData'])
+        session_instance = session.Session(sessionData)
+        print(session_instance.session_run())
         return super().inf_session(request, context)
 
     def getDevices(self, request, context):
@@ -166,11 +175,11 @@ def serve():
 
 
 if __name__ == '__main__':
+    client = Client()
 
     print("Starting server")
     serve()
        
-    
 
 #Composition ops
 
