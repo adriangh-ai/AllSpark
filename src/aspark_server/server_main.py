@@ -5,7 +5,8 @@ import threading
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from distributed import Client
 
-import modin.pandas as pd
+import pandas as pd
+import numpy as np
 import json
 import sys
 from pathlib import Path
@@ -144,11 +145,28 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         print(type(request))
         sessionData = [MessageToDict(message) for message in request.request]
         print('did it do ti?')
+        print(sessionData)
         for request in sessionData:
-            request['data']['sentenceData'] = pd.DataFrame(request['data']['sentenceData'])
+            request['sentence'] = pd.DataFrame(request['sentence'])
+            request['sentence'].columns = ['sentence']
+        
+        print(sessionData)
         session_instance = session.Session(sessionData)
-        print(session_instance.session_run())
-        return super().inf_session(request, context)
+        ses_return = session_instance.session_run()
+
+        for r_embeds in ses_return:
+            r_embeds= r_embeds.drop(columns='sentence')
+            embed_dataset = compservice_pb2.EmbeddingDataSet()
+
+            _embeddings = []
+            for row in r_embeds.iterrows():
+                sentence_embedding = embed_dataset.Embedding()
+                sentence_embedding.value.extend(row[1].values.tolist())
+                _embeddings.append(sentence_embedding)
+
+            embed_dataset.embedding.extend(_embeddings)
+          
+            yield embed_dataset
 
     def getDevices(self, request, context):
         devices = compservice_pb2.DeviceList()
@@ -176,8 +194,16 @@ def serve():
 
 if __name__ == '__main__':
     client = Client()
+    
+    """ dasta3 = pd.DataFrame(['Testing this.', "This."])
+    dasta3.columns = ['sentence']
+    ses = session.Session([{'model': 'bert-base-uncased', 'layerLow': 12, 'layerUp': 12, 'compFunc': 'cls', 'sentence': dasta3 , 'batchsize': 1, 'devices': {'name': ['cuda:1', 'cuda:2']}}])
+    ses_return = ses.session_run()
 
-    print("Starting server")
+
+
+    print(ses_return) """
+    
     serve()
        
 

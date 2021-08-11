@@ -92,7 +92,6 @@ class Fcomp(Compbase):
         #try parallelism
         output = torch.stack([torch.stack([self._sentencefunc(layer) for layer in sentence]) for sentence in output])
         output = torch.mean(output,1)
-        print(output)
         return output
 
 

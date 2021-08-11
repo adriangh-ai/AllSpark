@@ -7,8 +7,9 @@ import nltk
 import pandas
 import google.protobuf as pb
 from google.protobuf.json_format import Parse
-from google.protobuf.json_format import MessageToJson
+from google.protobuf.json_format import MessageToDict
 
+from collections import OrderedDict
 from difflib import get_close_matches
 import requests
 import os
@@ -27,6 +28,7 @@ import grpc
 from src.grpc_files import compservice_pb2, compservice_pb2_grpc
 import grpc_if_methods
 
+from callbacks_inf import request_record, tab_record
 
 ############################## CLIENT STARTUP SCRIPT ######################################################
 
@@ -47,8 +49,7 @@ _model_list = _modelrepo_update()   #Runs at startup, gets the up to date list o
 
 request_server = grpc_if_methods.Server_grpc_if("localhost:42001") #Instanciates the grpc interface class
 
-request_record = {}    # Record where the requests are temporary stored
-tab_record = {}        # Record where the Inference Tabs are stored
+
 
 
 #############################################################################################################
@@ -123,54 +124,20 @@ def add_inf_tab(n_clicks, children):
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
 
-    _record = request_record.copy()
-    request_record.clear()
+    _record = request_record.copy()                         # Make a copy of the record to work with
+    request_record.clear()                                  # Clear the record
+    rec_keys = list(_record.keys())
 
-    session_pb = compservice_pb2.Session()
-    _request_list = []
+    response = [MessageToDict(message) for message in request_server.inf_session(_record
+                                                                                ,tab_record)]
 
-    for i in list(_record.keys()):
-        tab_record[i] = _record.pop(i)
+    for i in range(len(rec_keys)):
+        response_embeddings = response[i]['embedding']
+        _key = rec_keys[i]
+        request_tab = tab_record[_key]
+        request_tab.set_embeddings(response_embeddings)
+        children.append(request_tab.generate_tab())
 
-        request = compservice_pb2.Request()
-        request.model = tab_record[i].model
-        request.layer_low= tab_record[i].layer_low
-        request.layer_up = tab_record[i].layer_up
-        request.comp_func = tab_record[i].comp_func
-        request.batchsize = tab_record[i].batchsize
-        request.devices.name.extend(tab_record[i].devices)
-
-        _dataset = tab_record[i].dataset[tab_record[i].text_column]
-        #_dataset['posicion'] = _dataset.reset_index().index
-        #_dataset = _dataset.to_json(orient='records')
-        _message = []
-        
-        for index,row in _dataset.iterrows():
-            _message.append(request.data.Sentence(position=index+1
-                                                ,sentence=row[tab_record[i].text_column].item()))
-
-        request.data.sentence_data.extend(_message)
-
-        _request_list.append(request)
-    
-    session_pb.request.extend(_request_list)
-
-    print(request_server.inf_session(session_pb))
-
-        
-        
-        #_message = Parse(i, request_pb.Sentence())
-        
-    print(_message[0])
-
-    new_tab = dcc.Tab(label = 'Inference',className='main-tabs', children=[
-                        html.Div( id={'type':'inf-tab', 'index': n_clicks },children=[
-                            html.P('this is al there is inside'),
-                            html.Button('will this work', id= {'type':'button-new'
-                                                                ,'index': n_clicks }, n_clicks=0, name='hmm')
-                        ])
-            ])
-    children.append(new_tab)
     return children
 
 #########################
@@ -316,7 +283,7 @@ def parse_file_ul(contents, filename):
 
     try:
         if 'txt' in filename:
-            df = pandas.DataFrame(tokenize.sent_tokenize(decoded.decode('utf-8')))
+            df = pandas.DataFrame(tokenize.sent_tokenize(decoded.decode('utf-8-sig')))
         if 'csv' in filename:
             df = pandas.read_csv(io.StringIO(decoded.decode('utf-8', errors='replace')), nrows=10, sep='\s+')
         if 'json' in filename:

@@ -21,8 +21,33 @@ class Server_grpc_if():
     def getDatasets(self, Empty):
         pass 
 
-    def inf_session(self, Session):
-        return self.stub.inf_session(Session)
+    def inf_session(self, _record, tab_record):
+        session_pb = compservice_pb2.Session()
+        _request_list = []
+
+        for i in list(_record.keys()):
+            tab_record[i] = _record.pop(i)                      # Take request from request record
+
+            request = compservice_pb2.Request()
+            request.model = tab_record[i].model                 # Model to grpc message
+            request.layer_low= tab_record[i].layer_low          # Lower layer to grpc message
+            request.layer_up = tab_record[i].layer_up           # Upper layer to grpc message
+            request.comp_func = tab_record[i].comp_func         # Composition Function to grpc message
+            request.batchsize = tab_record[i].batchsize         # Batchsize to grpc message
+            request.devices.name.extend(tab_record[i].devices)  # Device list to grpc message
+
+            _column_index = tab_record[i].text_column
+            _dataset = tab_record[i].dataset[_column_index]
+            _dataset = _dataset[_column_index].squeeze().to_list()
+            request.sentence.extend(_dataset)                   # Dataset sentences to grpc message
+            
+            print(_dataset)
+            _request_list.append(request)
+        
+        session_pb.request.extend(_request_list)
+        
+        for request in self.stub.inf_session(session_pb):
+            yield request
     def getDevices(self):
         device_list = self.stub.getDevices(compservice_pb2.Empty(empty=0))
         for device in device_list.dev:

@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x11\x63ompservice.proto\"\x1d\n\x08Response\x12\x11\n\tcompleted\x18\x01 \x01(\x08\"\x1a\n\x05Model\x12\x11\n\tmodelname\x18\x01 \x01(\t\"(\n\tModelList\x12\x1b\n\x05model\x18\x01 \x03(\x0b\x32\x0c.ModelStruct\"9\n\x0bModelStruct\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06layers\x18\x02 \x01(\x05\x12\x0c\n\x04size\x18\x03 \x01(\x05\"c\n\x07\x44\x61taset\x12(\n\rsentence_data\x18\x01 \x03(\x0b\x32\x11.Dataset.Sentence\x1a.\n\x08Sentence\x12\x10\n\x08position\x18\x02 \x01(\x05\x12\x10\n\x08sentence\x18\x01 \x01(\t\"\x1d\n\x0b\x44\x61tasetList\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1d\n\x0b\x44\x61tasetName\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"|\n\x10\x45mbeddingDataSet\x12.\n\tembedding\x18\x01 \x03(\x0b\x32\x1b.EmbeddingDataSet.Embedding\x12\n\n\x02id\x18\x02 \x01(\x05\x1a,\n\tEmbedding\x12\r\n\x05value\x18\x01 \x03(\x02\x12\x10\n\x08position\x18\x02 \x01(\x05\"$\n\x07Session\x12\x19\n\x07request\x18\x01 \x03(\x0b\x32\x08.Request\"\x9a\x01\n\x07Request\x12\r\n\x05model\x18\x01 \x01(\t\x12\x11\n\tlayer_low\x18\x02 \x01(\x05\x12\x10\n\x08layer_up\x18\x03 \x01(\x05\x12\x11\n\tcomp_func\x18\x04 \x01(\t\x12\x16\n\x04\x64\x61ta\x18\x05 \x01(\x0b\x32\x08.Dataset\x12\x11\n\tbatchsize\x18\x06 \x01(\x05\x12\x1d\n\x07\x64\x65vices\x18\x07 \x01(\x0b\x32\x0c.DeviceNames\"\x83\x01\n\nDeviceList\x12\x1f\n\x03\x64\x65v\x18\x01 \x03(\x0b\x32\x12.DeviceList.Device\x1aT\n\x06\x44\x65vice\x12\x13\n\x0b\x64\x65vice_name\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x14\n\x0cmemory_total\x18\x03 \x01(\x05\x12\x13\n\x0bmemory_free\x18\x04 \x01(\x05\"\x1b\n\x0b\x44\x65viceNames\x12\x0c\n\x04name\x18\x01 \x03(\t\"\x16\n\x05\x45mpty\x12\r\n\x05\x65mpty\x18\x01 \x01(\x05\x32\xcd\x02\n\x0b\x63ompservice\x12$\n\rdownloadModel\x12\x06.Model\x1a\t.Response\"\x00\x12\"\n\x0b\x64\x65leteModel\x12\x06.Model\x1a\t.Response\"\x00\x12!\n\tgetModels\x12\x06.Empty\x1a\n.ModelList\"\x00\x12)\n\x0eupdloadDataset\x12\x08.Dataset\x1a\t.Response\"\x00(\x01\x12*\n\rdeleteDataset\x12\x0c.DatasetName\x1a\t.Response\"\x00\x12%\n\x0bgetDatasets\x12\x06.Empty\x1a\x0c.DatasetList\"\x00\x12.\n\x0binf_session\x12\x08.Session\x1a\x11.EmbeddingDataSet\"\x00\x30\x01\x12#\n\ngetDevices\x12\x06.Empty\x1a\x0b.DeviceList\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x11\x63ompservice.proto\"\x1d\n\x08Response\x12\x11\n\tcompleted\x18\x01 \x01(\x08\"\x1a\n\x05Model\x12\x11\n\tmodelname\x18\x01 \x01(\t\"(\n\tModelList\x12\x1b\n\x05model\x18\x01 \x03(\x0b\x32\x0c.ModelStruct\"9\n\x0bModelStruct\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06layers\x18\x02 \x01(\x05\x12\x0c\n\x04size\x18\x03 \x01(\x05\"c\n\x07\x44\x61taset\x12(\n\rsentence_data\x18\x01 \x03(\x0b\x32\x11.Dataset.Sentence\x1a.\n\x08Sentence\x12\x10\n\x08position\x18\x02 \x01(\x05\x12\x10\n\x08sentence\x18\x01 \x01(\t\"\x1d\n\x0b\x44\x61tasetList\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"\x1d\n\x0b\x44\x61tasetName\x12\x0e\n\x06\x64ummy3\x18\x01 \x01(\x05\"^\n\x10\x45mbeddingDataSet\x12.\n\tembedding\x18\x01 \x03(\x0b\x32\x1b.EmbeddingDataSet.Embedding\x1a\x1a\n\tEmbedding\x12\r\n\x05value\x18\x01 \x03(\x02\"$\n\x07Session\x12\x19\n\x07request\x18\x01 \x03(\x0b\x32\x08.Request\"\x94\x01\n\x07Request\x12\r\n\x05model\x18\x01 \x01(\t\x12\x11\n\tlayer_low\x18\x02 \x01(\x05\x12\x10\n\x08layer_up\x18\x03 \x01(\x05\x12\x11\n\tcomp_func\x18\x04 \x01(\t\x12\x10\n\x08sentence\x18\x05 \x03(\t\x12\x11\n\tbatchsize\x18\x06 \x01(\x05\x12\x1d\n\x07\x64\x65vices\x18\x07 \x01(\x0b\x32\x0c.DeviceNames\"\x83\x01\n\nDeviceList\x12\x1f\n\x03\x64\x65v\x18\x01 \x03(\x0b\x32\x12.DeviceList.Device\x1aT\n\x06\x44\x65vice\x12\x13\n\x0b\x64\x65vice_name\x18\x01 \x01(\t\x12\n\n\x02id\x18\x02 \x01(\t\x12\x14\n\x0cmemory_total\x18\x03 \x01(\x05\x12\x13\n\x0bmemory_free\x18\x04 \x01(\x05\"\x1b\n\x0b\x44\x65viceNames\x12\x0c\n\x04name\x18\x01 \x03(\t\"\x16\n\x05\x45mpty\x12\r\n\x05\x65mpty\x18\x01 \x01(\x05\x32\xcd\x02\n\x0b\x63ompservice\x12$\n\rdownloadModel\x12\x06.Model\x1a\t.Response\"\x00\x12\"\n\x0b\x64\x65leteModel\x12\x06.Model\x1a\t.Response\"\x00\x12!\n\tgetModels\x12\x06.Empty\x1a\n.ModelList\"\x00\x12)\n\x0eupdloadDataset\x12\x08.Dataset\x1a\t.Response\"\x00(\x01\x12*\n\rdeleteDataset\x12\x0c.DatasetName\x1a\t.Response\"\x00\x12%\n\x0bgetDatasets\x12\x06.Empty\x1a\x0c.DatasetList\"\x00\x12.\n\x0binf_session\x12\x08.Session\x1a\x11.EmbeddingDataSet\"\x00\x30\x01\x12#\n\ngetDevices\x12\x06.Empty\x1a\x0b.DeviceList\"\x00\x62\x06proto3'
 )
 
 
@@ -316,13 +316,6 @@ _EMBEDDINGDATASET_EMBEDDING = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='position', full_name='EmbeddingDataSet.Embedding.position', index=1,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -335,8 +328,8 @@ _EMBEDDINGDATASET_EMBEDDING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=424,
-  serialized_end=468,
+  serialized_start=412,
+  serialized_end=438,
 )
 
 _EMBEDDINGDATASET = _descriptor.Descriptor(
@@ -354,13 +347,6 @@ _EMBEDDINGDATASET = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='id', full_name='EmbeddingDataSet.id', index=1,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -374,7 +360,7 @@ _EMBEDDINGDATASET = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=344,
-  serialized_end=468,
+  serialized_end=438,
 )
 
 
@@ -405,8 +391,8 @@ _SESSION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=470,
-  serialized_end=506,
+  serialized_start=440,
+  serialized_end=476,
 )
 
 
@@ -447,9 +433,9 @@ _REQUEST = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='data', full_name='Request.data', index=4,
-      number=5, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
+      name='sentence', full_name='Request.sentence', index=4,
+      number=5, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -479,8 +465,8 @@ _REQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=509,
-  serialized_end=663,
+  serialized_start=479,
+  serialized_end=627,
 )
 
 
@@ -532,8 +518,8 @@ _DEVICELIST_DEVICE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=713,
-  serialized_end=797,
+  serialized_start=677,
+  serialized_end=761,
 )
 
 _DEVICELIST = _descriptor.Descriptor(
@@ -563,8 +549,8 @@ _DEVICELIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=666,
-  serialized_end=797,
+  serialized_start=630,
+  serialized_end=761,
 )
 
 
@@ -595,8 +581,8 @@ _DEVICENAMES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=799,
-  serialized_end=826,
+  serialized_start=763,
+  serialized_end=790,
 )
 
 
@@ -627,8 +613,8 @@ _EMPTY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=828,
-  serialized_end=850,
+  serialized_start=792,
+  serialized_end=814,
 )
 
 _MODELLIST.fields_by_name['model'].message_type = _MODELSTRUCT
@@ -637,7 +623,6 @@ _DATASET.fields_by_name['sentence_data'].message_type = _DATASET_SENTENCE
 _EMBEDDINGDATASET_EMBEDDING.containing_type = _EMBEDDINGDATASET
 _EMBEDDINGDATASET.fields_by_name['embedding'].message_type = _EMBEDDINGDATASET_EMBEDDING
 _SESSION.fields_by_name['request'].message_type = _REQUEST
-_REQUEST.fields_by_name['data'].message_type = _DATASET
 _REQUEST.fields_by_name['devices'].message_type = _DEVICENAMES
 _DEVICELIST_DEVICE.containing_type = _DEVICELIST
 _DEVICELIST.fields_by_name['dev'].message_type = _DEVICELIST_DEVICE
@@ -780,8 +765,8 @@ _COMPSERVICE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=853,
-  serialized_end=1186,
+  serialized_start=817,
+  serialized_end=1150,
   methods=[
   _descriptor.MethodDescriptor(
     name='downloadModel',

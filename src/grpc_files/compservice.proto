@@ -47,13 +47,12 @@ message DatasetName {
     int32 dummy3 = 1;
 }
 
+
 message EmbeddingDataSet {
     message Embedding {
         repeated float value =1;
-        int32 position =2;
     }
     repeated Embedding embedding = 1;
-    int32 id = 2;
 }
 
 message Session{
@@ -64,7 +63,7 @@ message Request {
     int32 layer_low = 2;
     int32 layer_up = 3;
     string comp_func = 4;
-    Dataset data = 5;
+    repeated string sentence = 5;
     int32 batchsize = 6;
     DeviceNames devices = 7;
 }
