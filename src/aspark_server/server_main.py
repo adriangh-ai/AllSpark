@@ -149,6 +149,8 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         for request in sessionData:
             request['sentence'] = pd.DataFrame(request['sentence'])
             request['sentence'].columns = ['sentence']
+            print(request['model'])
+            request['model'] = str(Path.joinpath(WORKDIR, f"irequest/models/{request['model']}"))
         
         print(sessionData)
         session_instance = session.Session(sessionData)

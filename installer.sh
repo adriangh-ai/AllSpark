@@ -14,5 +14,6 @@ apt-get -y install python3-pip
 #pip install dash-daq
 #npm init, install electron
 #pip install modin[dask]
+#pip install umap-learn
 pip3 install -U torch transformers numpy plotly==5.1.0 scikit-learn pandas psutil nltk datasets dash grpcio grpcio-tools
 python3 -m nltk.downloader punkt

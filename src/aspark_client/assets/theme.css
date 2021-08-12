@@ -10,7 +10,7 @@ body {
     font-family: sans-serif;
     background-color: var(--background1);
     -webkit-font-smoothing: antialiased;
-    color: var(--font) 
+    color: var(--font);
 }
 h1, h2, h3, h4, h5, h6 {
     color: var(--accent)
@@ -60,6 +60,7 @@ h1, h2, h3, h4, h5, h6 {
     background-color: var(--background1)!important;
     border:1px solid var(--background2);
     color: var(--font)!important;
+    display : block !important;
 }
 
 .Select--single > .Select-control .Select-value, .Select-placeholder {
@@ -237,4 +238,4 @@ h1, h2, h3, h4, h5, h6 {
   label {
       display:block;
   }
-  
+ 
