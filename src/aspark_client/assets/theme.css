@@ -1,6 +1,6 @@
 :root {
     --font: rgb(199, 199, 199);
-    --accent: #00897b;
+    --accent: #636efa;
     --background1: #191919;
     --background2: #282828;
     --background3:  #363636;
@@ -30,7 +30,8 @@ h1, h2, h3, h4, h5, h6 {
 .main-tabs {
     background-color: var(--background3)!important;
     color : var(--font)!important;
-    border:0px!important;
+    border:1px!important;
+    border-color: var(--background1);
 }
 .tab--selected {
     border-top: 3px solid var(--accent)!important;
@@ -73,11 +74,14 @@ h1, h2, h3, h4, h5, h6 {
 /* Main blocks */
 .tab-block {
     
-    padding: 5vw; /*temp*/
+    padding: 1vw; /*temp*/
     background-color: #1d1d1d;
     border: 1px solid var(--background3);
-    margin-top : 1vw;
     margin-bottom : 1vw;
+}
+.js-plotly-plot .plotly .modebar {
+  left: 50%;
+  transform: translateX(-50%);
 }
 
   
@@ -108,7 +112,7 @@ h1, h2, h3, h4, h5, h6 {
   .button:hover,
   button:hover {
       background-color: var(--accent);
-      color :#a4e0da;
+      color :#aaaff3;
       transition-duration: 0.1s;    
   }
   .button:disabled,
@@ -149,7 +153,7 @@ h1, h2, h3, h4, h5, h6 {
   }
   .dash-header {
     border-color:#363636!important;
-    background-color: #00897b!important;
+    background-color: #636efa!important;
   }
   
   

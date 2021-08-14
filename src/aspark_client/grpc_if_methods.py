@@ -3,7 +3,9 @@ from src.grpc_files import compservice_pb2, compservice_pb2_grpc
 
 class Server_grpc_if():
     def __init__(self, address):
-        self.channel = grpc.insecure_channel(address)
+        self.channel = grpc.insecure_channel(address
+                                            ,options=[('grpc.max_send_message_length', 512 * 1024 * 1024)
+                                                    ,('grpc.max_receive_message_length', 512 * 1024 * 1024)])
         self.stub = compservice_pb2_grpc.compserviceStub(self.channel)
     def downloadModel(self, model):
         return self.stub.downloadModel(compservice_pb2.Model(modelname=model)) 
@@ -41,7 +43,7 @@ class Server_grpc_if():
             _dataset = _dataset[_column_index].squeeze().to_list()
             request.sentence.extend(_dataset)                   # Dataset sentences to grpc message
             
-            print(_dataset)
+        
             _request_list.append(request)
         
         session_pb.request.extend(_request_list)

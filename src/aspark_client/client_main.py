@@ -1,19 +1,16 @@
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).parents[2]))
 
-import grpc
-from src.grpc_files import compservice_pb2, compservice_pb2_grpc
+from pandas.io.formats import style
+sys.path.append(str(Path(__file__).parents[2]))
 
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output, State
 
 from app import app
 import callbacks_req
 import callbacks_inf
-#from layouts import layout1, layout2
 
 from waitress import serve
 
@@ -21,6 +18,7 @@ from waitress import serve
 app.title = "AllSpark"
 app.layout = html.Div([
     dcc.Store(id='tab-count', storage_type='session', data=1),
+    dcc.Store(id='update-layout'),
     html.Div(
         className="app-index-header",
         children=[
@@ -33,55 +31,91 @@ app.layout = html.Div([
         children = [dcc.Tabs(id="main-tab",className="main-tabs", value='tab-1', children=[
             dcc.Tab(label='Session', value='tab-1', className='main-tabs', children=[
                 html.Div(id = "block-req-list", className='tab-block', children=[
-                    "aquí es donde se pone la lista de requestst",
                     html.Div(id='memory-gauge-div'),
                     html.Div( children=[
                         html.Table(id='request-list-table', children=[])
                     ])
                 ]),
-                html.Div(id = "block-model", className='tab-block', children=[
-                    html.H3('Model Selection', style={"align":"centered"}),
-                    html.Div([ html.Label('HugginFace Model Repository'),
+                    html.Div(   children=[
+                        html.Div(className='tab-block', children=[
+                            html.H3('Composition Method'),
                             html.Div([
-                                dcc.Dropdown(id='model-dropdown', className="dropdown-menu", options=[],
-                                    multi=False,
-                                    style={"min-width":"75%", "display":"inline-block"}
-                                ),
-                                html.Button(id='download-model-button',
-                                    children=["Download"],
-                                    disabled=True,
-                                    style={"display": "inline-block","position":"relative"}
-                                )
-                            ]),
-                            html.Div(id='loading', children=[]),
-                            html.Div(id='download-state', title='', style={'hidden':True}),
-                            html.Div([
-                                "Select Model",
-                                dcc.Store(id='model-data-store'),
-                                dcc.RadioItems( id='block-models',
-                                    options=[],
-                                    labelStyle={'display':'block!important'}
-                                ),
-                                html.Button(id="delete-model-button",children=["Delete"],
-                                    style={"display": "inline-block","position":"relative",'visibility':'hidden'},
-                                ),
-                            ]),
-                            
-                            html.Div(id="layer-div", children=[
-                                html.Label('Layer selector'),
-                                dcc.RangeSlider(id='layer-slider',
-                                    min=1,
-                                    max=12,
-                                    step=1,
-                                    value=[12,12],
-                                    allowCross=False,
-                                    updatemode='mouseup',
-                                    disabled=True
-                                )
+                                        "Choose Composition Method",
+                                        dcc.RadioItems(id = "block-composition",
+                                            options=[
+                                                {'label': 'CLS', 'value': 'cls'},
+                                                {'label': 'Average', 'value': 'avg'},
+                                                {'label': 'F Joint', 'value': 'f_joint'},
+                                                {'label': 'F Ind', 'value': 'f_ind'},
+                                                {'label': 'F Inf', 'value': 'f_inf'},
+                                                {'label': 'Sentence Transformers (Siamese)', 
+                                                        'value': 'siamese', 
+                                                        'disabled':True},
+                                            ],
+                                            value='cls',
+                                            labelStyle={'display':'block!important'}
+                                        )
                             ])
-                    ])   
-                    
-                ]),
+                        ], style={'display':'inline-block', 'width':'20%'}),
+                        html.Div(id = "block-model", className='tab-block', children=[
+                            html.H3('Model Selection', style={"text-align":"centered"}),
+                            html.Div([ html.Label('HugginFace Model Repository'),
+                                    html.Div([
+                                        dcc.Dropdown(id='model-dropdown', className="dropdown-menu", options=[],
+                                            multi=False,
+                                            style={"min-width":"50%", "display":"inline-block"}
+                                        ),
+                                        html.Button(id='download-model-button',
+                                            children=["Download"],
+                                            disabled=True,
+                                            style={"display": "inline-block","position":"relative"}
+                                        )
+                                    ]),
+                                    html.Div(id='loading', children=[]),
+                                    html.Div(id='download-state', title='', style={'hidden':True}),
+                                    html.Div([
+                                        "Select Model",
+                                        dcc.Store(id='model-data-store'),
+                                        dcc.RadioItems( id='block-models',
+                                            options=[],
+                                            labelStyle={'display':'block!important'}
+                                        ),
+                                        html.Button(id="delete-model-button",children=["Delete"],
+                                            style={"display": "inline-block","position":"relative",'visibility':'hidden'},
+                                        ),
+                                    ]),
+                                    
+                                    html.Div(id="layer-div", children=[
+                                        html.Label('Layer selector'),
+                                        dcc.RangeSlider(id='layer-slider',
+                                            min=1,
+                                            max=12,
+                                            step=1,
+                                            value=[12,12],
+                                            allowCross=False,
+                                            updatemode='mouseup',
+                                            disabled=True
+                                        )
+                                    ])
+                            ])   
+                            
+                        ], style={'display':'inline-block', 'width':'60%'}),
+                        html.Div(id = "block-device", className='tab-block', children=[
+                            html.H3('Computing Devices'),
+                            html.Div([
+                                        "Select Devices",
+                                        dcc.Checklist(id="select-devices",
+                                            options=[],
+                                            labelStyle={'display':'block!important'}
+                                        )
+                            ])
+                        ], style={'display':'inline-block', 'width':'20%'}),
+                    ], style={'display':'flex'
+                                ,'display':'-webkit-box'
+                                ,'display':'-webkit-flex'
+                                ,'-webkit-flex-diredtion':'row'
+                                ,'flex-direction':'row'
+                                ,'align-items':'stretch'}),
                 html.Div(id = "block-file", className='tab-block', children=[
                     html.Div(className= 'file-upload-div', children=[
                         html.H3('Dataset Selection'),
@@ -101,8 +135,11 @@ app.layout = html.Div([
                             multiple=False,
                             max_size=-1
                         ),
-                        html.Div(id='display-ul-data', children=[]),
-                        html.Div(id='bacthsize-div', children=["Batchsize:",
+                        html.Div(id='display-ul-data', children=[
+                            #dcc. add table para que no haya errores al inicio
+                        ]),
+                        html.Div(id='bacthsize-div', children=[
+                            html.H5('Batchsize:'),
                             dcc.Input(id='batchsize-input'
                                      ,type='number'
                                      ,placeholder='Enter the batchsize...'
@@ -111,43 +148,10 @@ app.layout = html.Div([
                         ])
                     ])
                 ]),
-                html.Div(className='tab-block', children=[
-                    html.H3('Composition Method'),
-                    html.Div([
-                                "Choose Composition Method",
-                                dcc.RadioItems(id = "block-composition",
-                                    options=[
-                                        {'label': 'CLS', 'value': 'cls'},
-                                        {'label': 'Average', 'value': 'avg'},
-                                        {'label': 'F Joint', 'value': 'f_joint'},
-                                        {'label': 'F Ind', 'value': 'f_ind'},
-                                        {'label': 'F Inf', 'value': 'f_inf'},
-                                        {'label': 'Sentence Transformers (Siamese)', 
-                                                'value': 'siamese', 
-                                                'disabled':True},
-                                    ],
-                                    value='cls',
-                                    labelStyle={'display':'block!important'}
-                                )
-                    ])
-                ]),
-                html.Div(id = "block-device", className='tab-block', children=[
-                    html.H3('Computing Devices'),
-                    html.Div([
-                                "Select Devices",
-                                dcc.Checklist(id="select-devices",
-                                    options=[],
-                                    labelStyle={'display':'block!important'}
-                                )
-                    ])
-                ]),
-                html.Div(children=[
-                    html.Button('GO TAB', id="add-tab", n_clicks=0, name="nonse")
-                ]),
                 html.Div(children=[
                     html.Button('Add Request', id="add-request", n_clicks=0, disabled=True)
                 ])
-            ])
+            ]),
         ])
             
     ])

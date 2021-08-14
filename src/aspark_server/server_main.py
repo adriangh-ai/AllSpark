@@ -3,12 +3,13 @@ import transformers as ts
 import os, random, shutil, psutil
 import threading
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from distributed import Client
+import gc
+import sys
+import signal
 
 import pandas as pd
-import numpy as np
 import json
-import sys
+
 from pathlib import Path
 sys.path.append(str(Path(__file__).parents[2]))
 
@@ -17,7 +18,6 @@ from src.grpc_files import compservice_pb2_grpc, compservice_pb2
 from google.protobuf.json_format import MessageToDict
 
 from irequest import devices, session
-from irequest.composition import *
 
 
 WORKDIR = Path(__file__).parent             #Program base file tree
@@ -145,17 +145,17 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         print(type(request))
         sessionData = [MessageToDict(message) for message in request.request]
         print('did it do ti?')
-        print(sessionData)
+      
         for request in sessionData:
             request['sentence'] = pd.DataFrame(request['sentence'])
             request['sentence'].columns = ['sentence']
             print(request['model'])
             request['model'] = str(Path.joinpath(WORKDIR, f"irequest/models/{request['model']}"))
         
-        print(sessionData)
+       
         session_instance = session.Session(sessionData)
         ses_return = session_instance.session_run()
-
+        print('Preprocessing...')
         for r_embeds in ses_return:
             r_embeds= r_embeds.drop(columns='sentence')
             embed_dataset = compservice_pb2.EmbeddingDataSet()
@@ -167,8 +167,12 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
                 _embeddings.append(sentence_embedding)
 
             embed_dataset.embedding.extend(_embeddings)
-          
+            print('Sending request...')
             yield embed_dataset
+        del embed_dataset
+        del r_embeds
+        gc.collect()
+        print('se llega aquí?')
 
     def getDevices(self, request, context):
         devices = compservice_pb2.DeviceList()
@@ -182,21 +186,37 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         devices.dev.extend(_ls_dev)
         return devices
 
+
+
 def serve():
     """
     Method to start the grpc server
     """
-    server= grpc.server(ThreadPoolExecutor(max_workers=20))
+    server= grpc.server(ThreadPoolExecutor(max_workers=20)
+                        ,options=[
+                            ('grpc.max_send_message_length', 512 * 1024 * 1024)
+                            ,('grpc.max_receive_message_length', 512 * 1024 * 1024)
+                            ]
+                        )
+    
+    def signal_term_handler(signal,frame):
+        print('\nSigterm signal received. Stopping server...')
+        server.stop(0)
+
     compservice_pb2_grpc.add_compserviceServicer_to_server(CompServiceServicer(), server)
     server.add_insecure_port('[::]:42001') #add local from params? add secure?
     server.start()
-    server.wait_for_termination()
-    server.stop()
+    
+    signal.signal(signal.SIGTERM, signal_term_handler)
+
+    try:
+        server.wait_for_termination()
+    except (KeyboardInterrupt) as e:
+        print('\nStopping request from keyboard. Stopping server...')
+        server.stop(0)
 
 
 if __name__ == '__main__':
-    client = Client()
-    
     """ dasta3 = pd.DataFrame(['Testing this.', "This."])
     dasta3.columns = ['sentence']
     ses = session.Session([{'model': 'bert-base-uncased', 'layerLow': 12, 'layerUp': 12, 'compFunc': 'cls', 'sentence': dasta3 , 'batchsize': 1, 'devices': {'name': ['cuda:1', 'cuda:2']}}])

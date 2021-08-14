@@ -1,9 +1,7 @@
 import multiprocessing as mp
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from collections import deque
-import itertools
-from threading import TIMEOUT_MAX
+import gc
 
 import pandas as pd
 pd.options.mode.chained_assignment = None
@@ -15,7 +13,6 @@ import math
 
 import time
 
-from .models import model_cat, basemodel
 from .models.model_cat import Model_factory
 from .composition.composition_func import Comp_factory
 
@@ -79,9 +76,20 @@ class Req_worker():
                 embeddings.append(output.cpu())
             
         embeddings = [ptensor.detach().numpy() for ptensor in embeddings]
-       
+
         embeddings = numpy.concatenate(embeddings)
         pd_embeddings = pd.DataFrame(embeddings)
+
+        model.to('cpu')
+        del model
+        del tokens
+        del embeddings
+        del output
+        del composition
+        del batches
+        torch.cuda.empty_cache()
+        gc.collect()
+
         cat_embeddings = pd.concat([self.partialdata, pd_embeddings], axis=1)
         cat_embeddings = cat_embeddings.sort_values(by='indx', ignore_index=True)
         cat_embeddings = cat_embeddings.drop(columns='indx')
@@ -141,6 +149,9 @@ class InferenceRequest():
             worker_ls = ex.map(self.worker_fn , parcial_inf)
         
         embeddings = self._join_ouputs(worker_ls)
+        
+        del self.req_dataset
+        gc.collect()
 
         return embeddings
             
@@ -160,7 +171,7 @@ class Session():
     def session_run(self):
 
         inference_ls = []
-        with ThreadPoolExecutor() as ex:
+        with ProcessPoolExecutor(mp_context=mp.get_context('spawn')) as ex:
             inference_ls = ex.map(self.inference_fn, self.reqparams)
 
         return [i for i in inference_ls]

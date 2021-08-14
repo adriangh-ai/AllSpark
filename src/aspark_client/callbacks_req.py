@@ -3,7 +3,6 @@ from dash.dependencies import ALL, Input, MATCH, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
-import nltk
 import pandas
 import google.protobuf as pb
 from google.protobuf.json_format import Parse
@@ -116,11 +115,11 @@ def remove_from_request_list(n_clicks, id):
 #### RUN INFERENCE ####
 #######################
 @app.callback(
-    Output('main-tab', 'children'),
+    Output('update-layout', 'data'),
     Input('run-inference-button', 'n_clicks'),
-    State('main-tab', 'children')
+    #State('main-tab', 'children')
 )
-def add_inf_tab(n_clicks, children):
+def add_inf_tab(n_clicks):
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
 
@@ -128,18 +127,36 @@ def add_inf_tab(n_clicks, children):
     request_record.clear()                                  # Clear the record
     rec_keys = list(_record.keys())
 
+    print('Sending session request...')
     response = [MessageToDict(message) for message in request_server.inf_session(_record
                                                                                 ,tab_record)]
-
+    print('Preprocessing response...')
     for i in range(len(rec_keys)):
         response_embeddings = response[i]['embedding']
         _key = rec_keys[i]
         request_tab = tab_record[_key]
         request_tab.set_embeddings(response_embeddings)
-        children.append(request_tab.generate_tab())
+        #children.append(request_tab.generate_tab())
+    print('Sending to Tab.')
+    return rec_keys
 
-    return children
-
+@app.callback(
+    Output('main-tab', 'children'),
+    Input('update-layout','data'),
+    State('main-tab', 'children')
+)
+def update_layout(data, children):
+    _keys = list(tab_record.keys())
+    print(_keys)
+    _children = []
+    
+    _children.append(children[0])
+    for key in _keys:
+        print(f'wtf{key}')
+        print(f'sin embargo {tab_record[key].index}')
+        _children.append(tab_record[key].generate_tab())
+    
+    return _children
 #########################
 #### MODEL SELECTION ####
 #########################
@@ -271,9 +288,11 @@ def update_layer_slider_preselection(max):
 ########################################
 def parse_file_ul(contents, filename):
     """
-    Processes a sample size of the data coming from the upload frame,
+    Processes the data coming from the upload frame,
     and shows is.
     If txt, it uses the NLTK librarty to split the sentences.
+    No separator is specified for csv, json and xls; the dialect engine is 
+    trusted for that.
     """
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
@@ -285,7 +304,7 @@ def parse_file_ul(contents, filename):
         if 'txt' in filename:
             df = pandas.DataFrame(tokenize.sent_tokenize(decoded.decode('utf-8-sig')))
         if 'csv' in filename:
-            df = pandas.read_csv(io.StringIO(decoded.decode('utf-8', errors='replace')), nrows=10, sep='\s+')
+            df = pandas.read_csv(io.StringIO(decoded.decode('utf-8', errors='replace'))) #sep
         if 'json' in filename:
             df = pandas.read_json(io.StringIO(decoded.decode('utf-8'))) #lines? ^ separator?
         if 'xls' in filename:
@@ -296,17 +315,21 @@ def parse_file_ul(contents, filename):
     return df
     
 def make_table(contents, df, filename):
+    """
+    Generates the code for the datatable showing a sample size.
+    """
     if  df.empty:
         return html.Div([ 'There was an error processing the file.'])
     if  not df.empty:
         table_fragment =html.Div([
-        html.P('Select the column with the sentences to process'),
+        html.H4('Select the column with the sentences to process:'),
         html.H5(filename),
         dash_table.DataTable(
             id = 'dataset-table',
             data = df.head(10).to_dict('records'),
             columns = [{'name':i, 'id':i, 'selectable':True} for i in df.columns],
             style_table={'overflowY': 'scroll'},
+            style_cell={'textAlign':'left'},
             column_selectable='single'
         ),
         html.Div('Raw Content'),
