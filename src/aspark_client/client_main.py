@@ -1,5 +1,6 @@
-import sys
+import sys, getopt
 from pathlib import Path
+from dash_core_components.Loading import Loading
 
 from pandas.io.formats import style
 sys.path.append(str(Path(__file__).parents[2]))
@@ -7,6 +8,7 @@ sys.path.append(str(Path(__file__).parents[2]))
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_daq as daq
 
 from app import app
 import callbacks_req
@@ -16,14 +18,24 @@ from waitress import serve
 
 
 app.title = "AllSpark"
-app.layout = html.Div([
+app.layout = html.Div(id='app-index',children=[
     dcc.Store(id='tab-count', storage_type='session', data=1),
     dcc.Store(id='update-layout'),
     html.Div(
         className="app-index-header",
         children=[
             html.Div(className="app-header--title", children=[
-                html.H1("AllSpark", title="AllSpark")
+                html.H1("AllSpark", title="AllSpark", style={'display':'inline-block' }),
+                html.Button('Close Tab', id='close-tab-button' ,style={'display':'inline-block!important'
+                                                                        ,'position':'relative'
+                                                                        ,'float':'right'}),
+                dcc.Dropdown(id='tab-number-selector'   ,options=[]
+                                                        ,multi=False
+                                                        ,style={'width':'100px'
+                                                                ,'display':'inline-block'
+                                                                ,'position':'relative'
+                                                                ,'float':'right'
+                                                                 })
             ])
         ]
     ),
@@ -31,10 +43,14 @@ app.layout = html.Div([
         children = [dcc.Tabs(id="main-tab",className="main-tabs", value='tab-1', children=[
             dcc.Tab(label='Session', value='tab-1', className='main-tabs', children=[
                 html.Div(id = "block-req-list", className='tab-block', children=[
-                    html.Div(id='memory-gauge-div'),
+                    html.Div(id='memory-gauge-div', children = [
+                    ],
+                    style={'text-align': 'center'}
+                    ),
                     html.Div( children=[
-                        html.Table(id='request-list-table', children=[])
-                    ])
+                    html.Table(id='request-list-table', children=[])
+                    ]),
+                    html.Div(id='inference-is-loading')
                 ]),
                     html.Div(   children=[
                         html.Div(className='tab-block', children=[
@@ -44,6 +60,7 @@ app.layout = html.Div([
                                         dcc.RadioItems(id = "block-composition",
                                             options=[
                                                 {'label': 'CLS', 'value': 'cls'},
+                                                {'label': 'Sum', 'value': 'sum'},
                                                 {'label': 'Average', 'value': 'avg'},
                                                 {'label': 'F Joint', 'value': 'f_joint'},
                                                 {'label': 'F Ind', 'value': 'f_ind'},
@@ -65,14 +82,14 @@ app.layout = html.Div([
                                             multi=False,
                                             style={"min-width":"50%", "display":"inline-block"}
                                         ),
-                                        html.Button(id='download-model-button',
-                                            children=["Download"],
-                                            disabled=True,
-                                            style={"display": "inline-block","position":"relative"}
-                                        )
+                                        html.Div( children= [
+                                        dcc.Loading(id = 'download-loading', children = [
+                                            html.Button(id='download-model-button',
+                                                children=["Download"],
+                                                disabled=True,
+                                                
+                                            ) ]) ,  ], style={"display": "inline-block","position":"relative"})
                                     ]),
-                                    html.Div(id='loading', children=[]),
-                                    html.Div(id='download-state', title='', style={'hidden':True}),
                                     html.Div([
                                         "Select Model",
                                         dcc.Store(id='model-data-store'),
@@ -106,6 +123,7 @@ app.layout = html.Div([
                                         "Select Devices",
                                         dcc.Checklist(id="select-devices",
                                             options=[],
+                                            value=['cpu'],
                                             labelStyle={'display':'block!important'}
                                         )
                             ])
@@ -135,9 +153,10 @@ app.layout = html.Div([
                             multiple=False,
                             max_size=-1
                         ),
+                        dcc.Loading( children = [
                         html.Div(id='display-ul-data', children=[
                             #dcc. add table para que no haya errores al inicio
-                        ]),
+                        ])]),
                         html.Div(id='bacthsize-div', children=[
                             html.H5('Batchsize:'),
                             dcc.Input(id='batchsize-input'
@@ -157,20 +176,9 @@ app.layout = html.Div([
     ])
 ]) 
 
-
-""" @app.callback(Output('page-content', 'children'),
-              Input('url', 'pathname'))
-def display_page(pathname):
-    if pathname == '/apps/app1':
-         return layout1
-    elif pathname == '/apps/app2':
-         return layout2
-    else:
-        return '404'
- """
-
 if __name__=='__main__':
-    print('wtf')
+    print('Client startup...')
+
 
     serve(app.server, host='localhost', port=42000)
     """    import grpc_if_methods as g

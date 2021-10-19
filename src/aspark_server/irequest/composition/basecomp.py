@@ -30,4 +30,8 @@ class Compbase():
 
     @abstractmethod
     def compose(self):
+        """
+        This is the method specialized in the composition of word embeddings to sentences.
+        Each class should make its own implementation.
+        """
         pass

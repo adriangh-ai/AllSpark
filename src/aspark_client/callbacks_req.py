@@ -1,8 +1,10 @@
 import dash
-from dash.dependencies import ALL, Input, MATCH, Output, State
+from dash.dependencies import ALL, MATCH, Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_daq as daq
 import dash_table
+
 import pandas
 import google.protobuf as pb
 from google.protobuf.json_format import Parse
@@ -17,8 +19,6 @@ import io
 import base64
 
 from nltk import tokenize
-from requests.sessions import session
-from torch._C import device
 
 from app import app
 import callbacks_inf
@@ -43,10 +43,16 @@ def _modelrepo_update():
     except ConnectionError as e:
         print(e.strerror)
     return models
+def grpc_if_start(address):
+    """
+    Takes an address as String and returns its instance of the grpc interface class 
+    """
+    return grpc_if_methods.Server_grpc_if(address)
 
 _model_list = _modelrepo_update()   #Runs at startup, gets the up to date list of models from HuggingFace
 
-request_server = grpc_if_methods.Server_grpc_if("localhost:42001") #Instanciates the grpc interface class
+request_server = None #
+                #grpc_if_methods.Server_grpc_if("localhost:42001") #Instanciates the grpc interface class
 
 
 
@@ -54,7 +60,59 @@ request_server = grpc_if_methods.Server_grpc_if("localhost:42001") #Instanciates
 #############################################################################################################
 ###################################### INDEX DASH CALLBACKS #################################################
 #############################################################################################################
+######################
+#### CLOSE TAB CC ####
+######################
+@app.callback (
+    Output('tab-number-selector', 'options'),
+    Input('main-tab', 'children')
+)
+def close_tab_selector(children):
+    return [{'label': f'Tab {key}', 'value':key} for key in tab_record.keys()]
 
+@app.callback (
+    Output('close-tab-button', 'value'),
+    Input('close-tab-button','n_clicks'),
+    State('tab-number-selector', 'value')
+)
+def close_tab(clicks,selection):
+    if not clicks:
+        raise dash.exceptions.PreventUpdate
+    tab_record.pop(selection, None)
+    return []
+######################
+#### MEMORY GAUGE ####
+######################
+@app.callback (
+    Output('memory-gauge-div', 'children'),
+    Input('add-request', 'n_clicks'),
+    Input('request-list-table', 'children'),
+    State('model-data-store', 'data'),
+    State('batchsize-input', 'value')
+)
+def draw_memory_gauge(clicks, children, data, value):
+    _dev_mem = {}
+
+    for key in request_record.keys():
+        for device in request_record[key].devices:
+            _dev_mem[device] = _dev_mem.get(device,0) + data[request_record[key].model]['size']/100000000 + 0.01*value
+
+    _lsgauge = []
+    for dev in [i for i in request_server.getDevices()]:
+        _lsgauge.append(daq.Gauge(
+                                    color={"gradient":True,"ranges":{"green":[0,1.5*dev.memory_total//3]
+                                                                    ,"yellow":[1.5*dev.memory_total//3,2.8*(dev.memory_total//3)]
+                                                                    ,"red":[2.8*(dev.memory_total//3),dev.memory_total]}},
+                                    label= dev.id,
+                                    min=0,
+                                    max=dev.memory_total,
+                                    showCurrentValue =True,
+                                    units="GB",
+                                    value = dev.memory_total - dev.memory_free + _dev_mem.get(dev.id,0),
+                                    style= {'display':'inline-block'})
+                                    )
+
+    return _lsgauge
 ######################
 #### REQUEST TABLE####
 ######################
@@ -143,9 +201,10 @@ def add_inf_tab(n_clicks):
 @app.callback(
     Output('main-tab', 'children'),
     Input('update-layout','data'),
+    Input('close-tab-button', 'n_clicks'),
     State('main-tab', 'children')
 )
-def update_layout(data, children):
+def update_layout(data, clicks, children):
     _keys = list(tab_record.keys())
     print(_keys)
     _children = []
@@ -157,6 +216,13 @@ def update_layout(data, children):
         _children.append(tab_record[key].generate_tab())
     
     return _children
+
+@app.callback(
+    Output('inference-is-loading', 'children'),
+    Input('inference-loading', 'value' )
+)
+def inference_loading_state(value):
+    return value
 #########################
 #### MODEL SELECTION ####
 #########################
@@ -388,18 +454,6 @@ def update_devices_list(options):
                 'value': dev.id} for dev in [i for i in request_server.getDevices()]]
     return options
 
-""" @app.callback(
-    Output('select-devices', 'value'),
-    Input('select-devices', 'value'),
-    State('select-devices', 'value')
-)
-def update_devices_list(valuea, valueb):
-    if not valuea:
-        raise dash.exceptions.PreventUpdate
-    print
-    if "cpu" in valuea:
-        value = ['cpu']
-    return value """
 
 #####################
 #### ADD REQUEST ####
@@ -478,19 +532,3 @@ def update_tab_index(value):
         raise dash.exceptions.PreventUpdate
     return value
     
-#### GAUGE
-
-##############################pariah
-
-@app.callback(
-    Output({'type': 'inf-tab', 'index': MATCH}, 'children'),
-    Input({'type': 'button-new', 'index': MATCH}, "n_clicks"),
-    State({'type': 'inf-tab', 'index': MATCH}, 'children'),
-    State({'type': 'inf-tab', 'index': MATCH}, 'id')
-)
-def add_content(n_clicks, children,id):
-    if n_clicks == 0:
-        raise dash.exceptions.PreventUpdate
-    newp = html.P(f"testing if this works OMG index is{id['index']}")
-    children = [newp]
-    return children

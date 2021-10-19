@@ -5,16 +5,19 @@
     --background2: #282828;
     --background3:  #363636;
 }
-::-webkit-scrollbar { width: 0px; }
+/*::-webkit-scrollbar { width: 0px; }*/
 body {
     font-family: sans-serif;
     background-color: var(--background1);
     -webkit-font-smoothing: antialiased;
     color: var(--font);
+    overflow: visible!important;
+    overflow-x: hidden!important
 }
 h1, h2, h3, h4, h5, h6 {
     color: var(--accent)
 }
+
 .app-header {
     height: 60px;
     line-height: 60px;
@@ -37,7 +40,6 @@ h1, h2, h3, h4, h5, h6 {
     border-top: 3px solid var(--accent)!important;
     background-color: var(--background2)!important;
 }
-
 /* ---------------------DROPDOWN ----------------------------*/  
 .Select {
     color: var(--font)

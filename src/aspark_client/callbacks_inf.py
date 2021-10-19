@@ -145,9 +145,6 @@ class inference_tab():
                                         ])
                                     ], value='umap-tab')
                                 ]),
-                                dcc.Loading(id={'type':'loading-dim-red', 'index': self.index }, children=[
-                                    html.Div(id={'type':'dim-red-loading-output', 'index': self.index})
-                                ]),
                                 html.Button('RE-PLOT',id={'type':'replot-button', 'index': self.index })
                             ]),
                                 html.Div( children=[
@@ -164,8 +161,9 @@ class inference_tab():
                                                                     ,'index': self.index })
                                     ])
                             ],style={'display':'inline-block','width':'300px', 'min-width':'300px'}),
-
-                        html.Div(
+                        
+                        html.Div( id = {'type' : 'graph-wrapper', 'index':self.index }, children = [
+                            dcc.Loading(id={'type':'loading-graph', 'index': self.index}, children = [
                             dcc.Graph(id={'type':'plot-graph', 'index': self.index },
                                 style={'height':'100%'},
                                 responsive=True,
@@ -177,8 +175,8 @@ class inference_tab():
                                     'displayModeBar':'hover'
 
                                 }
-                                ),
-                        style={'display':'inline-block'}),
+                                )],
+                        style={'display':'inline-block'}) ]),
                         
                         ], style={'display':'flex'
                                 ,'display':'-webkit-box'
@@ -220,13 +218,15 @@ def figure_update(n_clicks, tab_val, pca1, pca2, pca3, tsneper, tsnelearn, tsnei
     
     return inf_tab.dimred_funct.graph_run(points, inf_tab.get_sentence_list())
 
-@app.callback(
-    Output({'type':'dim-red-loading-output', 'index': MATCH}, 'children'),
-    Input({'type':'dim-red-tabs', 'index': MATCH }, 'value')
+""" @app.callback(
+    Output({'type':'dim-red-loading-output', 'index': MATCH}, 'loading-state'),
+    Input({'type':'dim-red-tabs', 'index': MATCH }, 'value'),
+    Input({'type':'graph-wrapper', 'index': MATCH }, 'children')
 )
-def graph_loading(value):
+def graph_loading(value, value2):
+    print(app.title)
     time.sleep(1)
-    return 1
+    return value2 """
 
 """ @app.callback(
     Output({'type':'main-tab', 'index':MATCH}, 'children'),

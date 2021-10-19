@@ -16,7 +16,7 @@ function createWindow() {
 
     var mainAddr = 'http://localhost:42000';
     var openWindow = function() {
-        mainWindow = new BrowserWindow({ width: 800, height: 600 })
+        mainWindow = new BrowserWindow({ width: 1024, height: 768 })
         setTimeout(function() { 
             mainWindow.loadURL(mainAddr);
         },3000);

@@ -106,5 +106,6 @@ if __name__=='__main__':
     resultado['sentences'] = a
     #resultado = reductor.tsne(vectors, 30, 250, 200)
     #resultado= reductor.umap(vectors, 15)
-    reductor.graph_run(resultado, a)
+    reductor.graph_run(resultado, a) 
+   
    

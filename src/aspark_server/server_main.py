@@ -206,6 +206,7 @@ def serve():
     compservice_pb2_grpc.add_compserviceServicer_to_server(CompServiceServicer(), server)
     server.add_insecure_port('[::]:42001') #add local from params? add secure?
     server.start()
+    print('Server started.')
     
     signal.signal(signal.SIGTERM, signal_term_handler)
 

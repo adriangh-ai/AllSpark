@@ -81,6 +81,7 @@ class Req_worker():
         pd_embeddings = pd.DataFrame(embeddings)
 
         model.to('cpu')
+        #Memory cleanup
         del model
         del tokens
         del embeddings
