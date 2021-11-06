@@ -1,21 +1,27 @@
-from json import load
+from collections import OrderedDict
+import json
+from math import inf
+import sys
+from pathlib import Path
+from datetime import date, datetime
+
+import numpy as np
+
 from dash.dependencies import ALL, Input, MATCH, Output, State
 import dash
 import dash_core_components as dcc
-from dash_core_components.RadioItems import RadioItems
 import dash_html_components as html
-
-from collections import OrderedDict
-from dash_html_components.Label import Label
-import numpy as np
-
-from representation import dim_reduct, sent_simil
-import time
-
+import dash_table
+import pandas
 from app import app
 
-request_record = {}         # Record where the requests are temporary stored
-tab_record = OrderedDict()  # Record where the Inference Tabs are stored
+from representation import dim_reduct, sent_simil
+
+WORKDIR = Path(__file__).parent     # Program base file tree
+SAVED_FOLDER = Path.joinpath(WORKDIR, f'Saved_sessions')
+
+request_record = {}                 # Record where the requests are temporary stored
+tab_record = OrderedDict()          # Record where the Inference Tabs are stored
 
 class inference_tab():
     """
@@ -32,7 +38,8 @@ class inference_tab():
                 ,layer_up
                 ,comp_func
                 ,batchsize
-                ,devices):
+                ,devices
+                ,embeddings = []):
 
         self.index=index
         self.model=model
@@ -44,8 +51,9 @@ class inference_tab():
         self.comp_func = comp_func
         self.batchsize = batchsize
         self.devices = devices
-        self.embeddings = []
+        self.embeddings = embeddings
         self.dimred_funct = dim_reduct()
+        self.simil = sent_simil()
     
     def set_embeddings(self, embed_dict):
         embed_stack = []
@@ -55,6 +63,7 @@ class inference_tab():
     def get_sentence_list(self):
         #return self.dataset[self.text_column].squeeze().to_list()
         return self.dataset[self.text_column]
+    
     
     def generate_tab(self):
         new_tab = dcc.Tab(label = f'Inference {self.index}'
@@ -148,17 +157,29 @@ class inference_tab():
                                 html.Button('RE-PLOT',id={'type':'replot-button', 'index': self.index })
                             ]),
                                 html.Div( children=[
+                                    html.P("Sentence Similarity"),
                                     dcc.RadioItems(id={'type':'similarity-radio', 'index': self.index },
                                         options=[
+                                            {'label':'No Similarity', 'value': False},
                                             {'label': 'Cosine', 'value':'cos'},
                                             {'label':'ICMB', 'value':'icmb'}
-                                        ]
+                                        ],
+                                        value=False
                                     ),
-                                    html.Ul( children=[
-                                        
-                                    ]),
-                                    html.Button('Close Tab', id= {'type':'close-tab'
-                                                                    ,'index': self.index })
+                                    html.Div( children =[
+                                        html.P("B Selector"),
+                                        dcc.Slider(id={'type':'b-slider', 'index': self.index },
+                                            value = 1,
+                                            min=1,
+                                            max=2,
+                                            step=0.1,
+                                            marks = {i:f'{round(i,2)}' for i in np.arange(1,2,0.1)}
+                                        )
+                                        ]),
+
+                                    html.Button('Save Session', id= {'type':'save-session'
+                                                                    ,'index': self.index },
+                                                                    style={'position':'fixed','bottom':200})
                                     ])
                             ],style={'display':'inline-block','width':'300px', 'min-width':'300px'}),
                         
@@ -172,7 +193,8 @@ class inference_tab():
                                     'displaylogo':False,
                                     'fillFrame':True,
                                     'modeBarButtons':'hover',
-                                    'displayModeBar':'hover'
+                                    'displayModeBar':True,
+                                    'responsive': True
 
                                 }
                                 )],
@@ -184,10 +206,28 @@ class inference_tab():
                                 ,'-webkit-flex-diredtion':'row'
                                 ,'flex-direction':'row'
                                 ,'align-items':'stretch'}),
-                        
+                        html.Div(id = {'type':'simil-table-div', 'index': self.index }, children=[
+                                     dash_table.DataTable(
+                                        id = {'type':'simil-table', 'index': self.index },
+                                        data = [],
+                                        columns = [{'name':'Sentence Similarity', 'id':'Sentence Similarity'}], 
+                                        style_table={'overflowY': 'scroll'},
+                                        style_cell={'textAlign':'left'},
+                                        column_selectable='single'
+                                    ),
+                            ],
+                            style={'position':'fixed',
+                                    'bottom':0,
+                                    'width': '100%'}
+                        )
             ])
         return new_tab
 
+#######################
+#### GRAPH DRAWING ####
+#######################
+
+#### Re-Plot graph
 @app.callback(
     Output({'type':'plot-graph', 'index':MATCH}, 'figure'),
     Input({'type':'replot-button', 'index':MATCH}, 'n_clicks'),
@@ -203,12 +243,16 @@ class inference_tab():
 )
 def figure_update(n_clicks, tab_val, pca1, pca2, pca3, tsneper, tsnelearn, tsneiter, uneigh, id):
     indx = id['index']
-    inf_tab = tab_record[indx]
+    inf_tab = tab_record.get(indx, [])
+    
+    if not inf_tab:
+        return []
+
     points = inf_tab.embeddings
-    print(len(points))
-    if not tab_val:
+    
+    if not tab_val or not inf_tab:
         raise dash.exceptions.PreventUpdate
-    print(tab_val)
+   
     if tab_val == 'pca-tab':
         points = inf_tab.dimred_funct.pca(inf_tab.embeddings, pca1-1, pca2-1, pca3-1)
     elif tab_val == 'tsne-tab':
@@ -217,6 +261,105 @@ def figure_update(n_clicks, tab_val, pca1, pca2, pca3, tsneper, tsnelearn, tsnei
         points = inf_tab.dimred_funct.umap(inf_tab.embeddings, uneigh)
     
     return inf_tab.dimred_funct.graph_run(points, inf_tab.get_sentence_list())
+
+#### Similarity
+@app.callback(
+    Output({'type':'simil-table-div', 'index':MATCH}, 'children'),
+    Input({'type':'plot-graph', 'index':MATCH}, 'clickData'),
+    Input({'type':'similarity-radio', 'index': MATCH }, 'value'),
+    Input({'type':'b-slider', 'index': MATCH }, 'value'),
+    State({'type':'plot-graph', 'index':MATCH}, 'selectedData'),
+    State({'type':'plot-graph', 'index':MATCH}, 'id'),
+    State({'type':'plot-graph', 'index':MATCH}, 'figure')
+)
+def similarity_table(clickdata,valuesim, valueb ,selected,id,fig):
+    indx = id['index']
+    inf_tab = tab_record.get(indx, [])
+    
+    if not inf_tab:
+        return []
+
+    points = inf_tab.embeddings
+    
+    if not inf_tab: 
+        raise dash.exceptions.PreventUpdate
+    
+    if not valuesim:
+        return []
+        
+    sorted_sentences = pandas.DataFrame({'A' : []})
+    if clickdata:
+        vector1 = points[clickdata['points'][0]['pointNumber']]
+        simil_array = []
+        simil_method = 'distance'
+
+        if 'cos' in valuesim:
+            simil_array = inf_tab.simil.cosine(vector1, inf_tab.embeddings)
+            simil_method = 'cosine'
+        else:
+            simil_array = inf_tab.simil.icmb(vector1, inf_tab.embeddings, valueb)
+        
+        simil_array = inf_tab.simil.sorted_simil(simil_array,simil_method)[:10]
+
+        sorted_sentences = pandas.DataFrame([inf_tab.dataset.loc[i,inf_tab.text_column].values for i in simil_array]
+                                            , columns={'Sentence Similarity'})
+
+    sorted_sentences = sorted_sentences.head(10).to_dict('records') if not sorted_sentences.empty else []
+    _children = [dash_table.DataTable(
+                    id = {'type':'simil-table', 'index': indx },
+                    data = sorted_sentences,
+                    columns = [{'name':"Sentence Similarityy", 'id':'Sentence Similarity'}], 
+                    style_table={'overflowY': 'scroll'},
+                    style_cell={'textAlign':'left'},
+                    column_selectable='single',
+                    style_data_conditional= [{
+                        'if' : {
+                            'row_index' : 0
+                        },              
+                        'color':'#636efa'
+                    }]
+                )]
+    return _children
+
+
+######################
+#### SAVE TO FILE ####
+######################
+
+@app.callback(
+    Output({'type':'save-session','index' : MATCH}, 'value'),
+    Input({'type':'save-session','index' : MATCH}, 'n_clicks'),
+    State({'type':'save-session','index' : MATCH}, 'id')
+)
+def save_session(n_clicks, id):
+    if not n_clicks:
+        raise dash.exceptions.PreventUpdate
+
+    index = id['index']
+    inf_tab = tab_record[index]
+    
+    ################
+    ## haz excepciones antes de tocar, crea el folder, etc
+    
+    data_session = inf_tab.get_sentence_list()
+    data_session.rename({inf_tab.text_column[0] : 'sentences'}, axis=1, inplace = True)
+    data_session = data_session.to_dict('list')
+
+    data_session['value'] = inf_tab.embeddings.tolist()
+    data_session['model'] = inf_tab.model
+    data_session['filename'] = inf_tab.filename
+    data_session['column'] = inf_tab.text_column
+    data_session['layers'] = [inf_tab.layer_low, inf_tab.layer_up]
+    data_session['composition'] = inf_tab.comp_func
+
+    _timestamp = datetime.now().strftime("%m_%d_%Y_%H%M%S")
+    saved_file = str(Path.joinpath(SAVED_FOLDER, f"{inf_tab.model}{_timestamp}.aspk"))
+    
+    with open(saved_file, 'w+') as file:
+        json.dump(data_session, file)
+
+    #data_session.to_json(str(Path.joinpath(SAVED_FOLDER, f"testingsaved.json")))
+    return 0
 
 """ @app.callback(
     Output({'type':'dim-red-loading-output', 'index': MATCH}, 'loading-state'),

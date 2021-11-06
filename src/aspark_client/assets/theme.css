@@ -28,7 +28,14 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 22px;
     padding-left: 5px;
 }
-
+/* Landing Page */
+#landing-main {
+  text-align: center;
+}
+#landing-division {
+  width: 50%!important;
+  border-color: var(--background3)!important;;
+}
 /* Main page tabs */
 .main-tabs {
     background-color: var(--background3)!important;
@@ -86,7 +93,7 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateX(-50%);
 }
 
-  
+
   /* Buttons
   –––––––––––––––––––––––––––––––––––––––––––––––––– */
   .button,

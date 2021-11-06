@@ -1,9 +1,14 @@
 import numpy as np
 import plotly.express as px
-from sklearn.decomposition import PCA, TruncatedSVD
+
+from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
+
 import pandas as pd
 import umap
+
+from itertools import repeat
 
 class dim_reduct():
     def __init__(self):
@@ -71,21 +76,48 @@ class dim_reduct():
                             margin=dict(
                             r=10, l=10,
                             b=10, t=10),
-                            modebar_orientation='v'
+                            #modebar_orientation='v'
                         )
+        fig.update_layout(clickmode='event+select')
         return fig
         #fig.show()
 
 class sent_simil():
     def __init__(self):
         pass
-    def cosine(self):
-        pass
-    def icmb(self):
-        pass
+    def cosine(self, vector, embeddings):
+        return cosine_similarity([vector], embeddings)[0]
+    def euclidean(self, vector, embeddings):
+        return euclidean_distances([vector], embeddings).tolist()[0]
+    def icmb(self, vector, embeddings, b = 1):
+        """
+        Calculates the Vector-based Information Contrast Model with
+        B = 1 by default, equivalent to inner product
+        """
+        def _icmb(v1, v2, b):
+           
+            v1_norm = np.linalg.norm(v1)                    # ||v1||
+            v2_norm = np.linalg.norm(v2)                    # ||v2||
+            sqr_v1norm = np.square(v1_norm)                 # ||v1||^2
+            sqr_v2norm = np.square(v2_norm)                 # ||v2||^2
 
+            rleft = sqr_v1norm + sqr_v2norm                 # (A+B)
 
+            rright = b * (sqr_v1norm + sqr_v2norm - np.dot(v1,v2))# b(A+B-<v1,v2>)
 
+     
+            return rleft - rright                           # A-B
+        
+        return list(map(_icmb ,repeat(vector),embeddings, repeat(b)))
+
+    def sorted_simil(self, similarray, metric):
+        """
+        Returns the indices that would sort the distances array by
+        'distance' or 'similarity'
+        """
+        if 'distance' in metric:
+            return np.argsort(similarray)[::-1]   # Ascending order (by distance)
+        return np.argsort(similarray)[::-1] # Descending order (by similarity)
 
 
 if __name__=='__main__':

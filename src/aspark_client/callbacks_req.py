@@ -5,24 +5,23 @@ import dash_html_components as html
 import dash_daq as daq
 import dash_table
 
-import pandas
-import google.protobuf as pb
-from google.protobuf.json_format import Parse
-from google.protobuf.json_format import MessageToDict
 
-from collections import OrderedDict
 from difflib import get_close_matches
 import requests
-import os
 import json
 import io
 import base64
 
+import pandas
+import numpy
 from nltk import tokenize
 
 from app import app
 import callbacks_inf
 
+import google.protobuf as pb
+from google.protobuf.json_format import Parse
+from google.protobuf.json_format import MessageToDict
 import grpc
 from src.grpc_files import compservice_pb2, compservice_pb2_grpc
 import grpc_if_methods
@@ -51,8 +50,7 @@ def grpc_if_start(address):
 
 _model_list = _modelrepo_update()   #Runs at startup, gets the up to date list of models from HuggingFace
 
-request_server = None #
-                #grpc_if_methods.Server_grpc_if("localhost:42001") #Instanciates the grpc interface class
+request_server = grpc_if_methods.Server_grpc_if("localhost:42001") #Instanciates the default grpc interface class
 
 
 
@@ -201,10 +199,11 @@ def add_inf_tab(n_clicks):
 @app.callback(
     Output('main-tab', 'children'),
     Input('update-layout','data'),
-    Input('close-tab-button', 'n_clicks'),
+    Input('close-tab-button', 'value'),
+    Input('saved-ses-sink', 'n_clicks'),
     State('main-tab', 'children')
 )
-def update_layout(data, clicks, children):
+def update_layout(data, clicks, saved_clicks, children):
     _keys = list(tab_record.keys())
     print(_keys)
     _children = []
@@ -377,7 +376,7 @@ def parse_file_ul(contents, filename):
             df = pandas.read_excel(io.BytesIO(decoded))
 
     except Exception as e:
-        print(e)   
+        print(f'Issue converting file types : {e}')   
     return df
     
 def make_table(contents, df, filename):
@@ -525,10 +524,66 @@ def activate_add_request(model
 
 @app.callback(
     Output('tab-count', 'data'),
-    Input('add-request', 'value')
+    Input('add-request', 'value'),
+    Input('saved-ses-sink', 'n_clicks'),
+    State('tab-count', 'data')
 )
-def update_tab_index(value):
-    if not value:
+def update_tab_index(value, children, data):
+    if not value and not children:
         raise dash.exceptions.PreventUpdate
-    return value
+    return data+1
     
+############################
+#### LOAD SAVED SESSION ####
+############################
+@app.callback(
+    Output('saved-ses-sink', 'n_clicks' ),
+    Input('load-saved-session', 'filename'),
+    State('load-saved-session', 'contents'),
+    State('tab-count', 'data')
+)
+def load_saved(filename, contents, index):
+    if not filename:
+        raise dash.exceptions.PreventUpdate
+
+    content_type, content_string = contents.split(',')
+    decoded = base64.b64decode(content_string)
+    
+
+    try:
+        if 'aspk' in filename:
+            _saved_session = json.loads(decoded.decode('utf-8-sig'))
+            numpy.array(_saved_session['value'], dtype='float32')
+
+
+    except Exception as e:
+        print(f'Issue converting file types: {e}')  
+
+    saved_session = callbacks_inf.inference_tab(index=index
+                                            ,model=_saved_session['model']
+                                            ,dataset=pandas.DataFrame(_saved_session['sentences']
+                                                                    ,columns={*_saved_session['column']})
+                                            ,filename=_saved_session['filename']
+                                            ,text_column=_saved_session['column']
+                                            ,layer_low=_saved_session['layers'][0]
+                                            ,layer_up=_saved_session['layers'][1]
+                                            ,comp_func=_saved_session['composition']
+                                            ,embeddings=_saved_session['value']
+                                            ,batchsize=0
+                                            ,devices=['cpu'])
+    tab_record[index] = saved_session
+    return 1
+
+@app.callback(
+    Output('load-saved-session', 'filename'),
+    Input('saved-ses-sink', 'n_clicks')
+)
+def reset_loading_saved(n_clicks):
+    return None
+
+@app.callback(
+    Output('load-saved-session', 'contents'),
+    Input('saved-ses-sink', 'n_clicks')
+)
+def reset_loading_saved(n_clicks):
+    return None

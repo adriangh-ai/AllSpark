@@ -1,14 +1,13 @@
-import sys, getopt
+import sys
+import socket
 from pathlib import Path
-from dash_core_components.Loading import Loading
 
-from pandas.io.formats import style
-sys.path.append(str(Path(__file__).parents[2]))
+sys.path.append(str(Path(__file__).parents[2])) #Work Path
 
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import dash_daq as daq
+import dash_uploader as du
 
 from app import app
 import callbacks_req
@@ -20,6 +19,7 @@ from waitress import serve
 app.title = "AllSpark"
 app.layout = html.Div(id='app-index',children=[
     dcc.Store(id='tab-count', storage_type='session', data=1),
+    dcc.Loading(children=[
     dcc.Store(id='update-layout'),
     html.Div(
         className="app-index-header",
@@ -38,7 +38,7 @@ app.layout = html.Div(id='app-index',children=[
                                                                  })
             ])
         ]
-    ),
+    )]),
     html.Div(
         children = [dcc.Tabs(id="main-tab",className="main-tabs", value='tab-1', children=[
             dcc.Tab(label='Session', value='tab-1', className='main-tabs', children=[
@@ -64,10 +64,7 @@ app.layout = html.Div(id='app-index',children=[
                                                 {'label': 'Average', 'value': 'avg'},
                                                 {'label': 'F Joint', 'value': 'f_joint'},
                                                 {'label': 'F Ind', 'value': 'f_ind'},
-                                                {'label': 'F Inf', 'value': 'f_inf'},
-                                                {'label': 'Sentence Transformers (Siamese)', 
-                                                        'value': 'siamese', 
-                                                        'disabled':True},
+                                                {'label': 'F Inf', 'value': 'f_inf'}
                                             ],
                                             value='cls',
                                             labelStyle={'display':'block!important'}
@@ -138,7 +135,7 @@ app.layout = html.Div(id='app-index',children=[
                     html.Div(className= 'file-upload-div', children=[
                         html.H3('Dataset Selection'),
                         dcc.Upload(id = 'file-ul-req', children=[
-                            html.Div(['Drag and Drop or Select File(s)'
+                            html.Div(['Drag and Drop or Select File'
                             ]),
                         ], style ={
                                 'width': '100%',
@@ -167,9 +164,40 @@ app.layout = html.Div(id='app-index',children=[
                         ])
                     ])
                 ]),
-                html.Div(children=[
-                    html.Button('Add Request', id="add-request", n_clicks=0, disabled=True)
-                ])
+                html.Div( children=[
+                    html.Button('Add Request', id="add-request"
+                                             , n_clicks=0
+                                             , disabled=True
+                                             , style={  'width' : '100%',
+                                                        'position':'fixed',
+                                                        'bottom':0,
+                                                        'margin-left':'-50%'})
+                    ],
+                    style={'text-align':'center'}),
+                dcc.Loading(children = [
+                html.Div(id='saved-ses-sink', children = [
+                    dcc.Loading( children=[
+                        html.Div( className='tab-block', children=[
+                            html.H3('Load Saved Session'),
+                            dcc.Upload(id='load-saved-session', children = [
+                                'Drag and Drop or Select File'
+                            ]
+                             ,style ={
+                                'width': '100%',
+                                'height': '60px',
+                                'lineHeight': '60px',
+                                'borderWidth': '1px',
+                                'borderStyle': 'dashed',
+                                'borderRadius': '5px',
+                                'textAlign': 'center',
+                                'margin': '10px',                            
+                            },
+                            multiple=False,
+                            max_size=-1
+                            )
+                        ])
+                    ])
+                ])])
             ]),
         ])
             
@@ -179,8 +207,28 @@ app.layout = html.Div(id='app-index',children=[
 if __name__=='__main__':
     print('Client startup...')
 
+    #If there is a server passed as an argument, else defaults to localhost:42001
+    #in callbacks_req module
 
-    serve(app.server, host='localhost', port=42000)
+    if len(sys.argv) > 1:
+        callbacks_req.request_server = callbacks_req.grpc_if_start(sys.argv[1])
+    
+    wsgi_port = 42000 # <--- get parameter from electronjs main
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)
+        while not sock.connect_ex(('localhost', wsgi_port)):
+            #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            wsgi_port+=1
+    except Exception as e:
+        print(e)
+    finally:
+        sock.close()
+
+    print(wsgi_port)
+    serve(app.server, host='localhost', port=wsgi_port)
+    
     """    import grpc_if_methods as g
         test= g.Server_grpc_if("localhost:42001")
         print(test.downloadModel('bert-base-uncased'))

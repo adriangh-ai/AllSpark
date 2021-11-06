@@ -1,10 +1,11 @@
 import torch
 import transformers as ts
-import os, random, shutil, psutil
+
+import sys ,os, random, shutil
 import threading
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-import gc
-import sys
+from concurrent.futures import ThreadPoolExecutor
+import gc #gargabe collector
+
 import signal
 
 import pandas as pd
@@ -144,7 +145,6 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
     def inf_session(self, request, context):
         print(type(request))
         sessionData = [MessageToDict(message) for message in request.request]
-        print('did it do ti?')
       
         for request in sessionData:
             request['sentence'] = pd.DataFrame(request['sentence'])
