@@ -38,7 +38,8 @@ class Req_worker():
 
     def _batching(self):
         """
-        Process the input in batches. Smart batching?? preserve cumulative order of batches
+        Process the input in batches. Performs Smart Batching sorting the input and tokenizing it,
+        then dividing it into chunks of size bactchsize
         """
         self.partialdata['indx'] = self.partialdata.reset_index().index
         print(self.partialdata)
@@ -62,38 +63,42 @@ class Req_worker():
         #correction
         time1 = time.time()
         embeddings = list()
-        batches = self._batching()
+        try:
+            with torch.inference_mode():
+                model = Model_factory.get_model(self.modelname, self.single_dev)
+                composition = Comp_factory.get_compfun(self.compfunc)
+                time1 = time.time()
+                self.batchsize = max(model.paddding()*self.batchsize,1)
+                batches = self._batching()
+                for batch in batches:
+                    tokens = model.tokenize(batch)
+                    output = self._isolate_layers(model.inference(tokens))
+                    output = composition.clean_special(output, model.special_mask)
+                    output = composition.compose(output)
+                    embeddings.append(output.cpu())
+                
+            embeddings = [ptensor.detach().numpy() for ptensor in embeddings]
 
-        with torch.inference_mode():
-            model = Model_factory.get_model(self.modelname, self.single_dev)
-            composition = Comp_factory.get_compfun(self.compfunc)
-            time1 = time.time()
-            for batch in batches:
-                tokens = model.tokenize(batch)
-                output = self._isolate_layers(model.inference(tokens))
-                output = composition.clean_special(output, model.special_mask)
-                output = composition.compose(output)
-                embeddings.append(output.cpu())
+            embeddings = numpy.concatenate(embeddings)
+            pd_embeddings = pd.DataFrame(embeddings)
+
+            model.to('cpu')
+            #Memory cleanup
+            del model
+            del tokens
+            del embeddings
+            del output
+            del composition
+            del batches
+            torch.cuda.empty_cache()
+            gc.collect()
+
+            cat_embeddings = pd.concat([self.partialdata, pd_embeddings], axis=1)
+            cat_embeddings = cat_embeddings.sort_values(by='indx', ignore_index=True)
+            cat_embeddings = cat_embeddings.drop(columns='indx')
+        except Exception as e:
+            print(f'Encountered and error during processing. {e}')
             
-        embeddings = [ptensor.detach().numpy() for ptensor in embeddings]
-
-        embeddings = numpy.concatenate(embeddings)
-        pd_embeddings = pd.DataFrame(embeddings)
-
-        model.to('cpu')
-        #Memory cleanup
-        del model
-        del tokens
-        del embeddings
-        del output
-        del composition
-        del batches
-        torch.cuda.empty_cache()
-        gc.collect()
-
-        cat_embeddings = pd.concat([self.partialdata, pd_embeddings], axis=1)
-        cat_embeddings = cat_embeddings.sort_values(by='indx', ignore_index=True)
-        cat_embeddings = cat_embeddings.drop(columns='indx')
         time2 = time.time()
         print(f"tiempoes {time2-time1}")
         return cat_embeddings
@@ -204,7 +209,7 @@ if __name__ == "__main__":
     dasta2 = pd.DataFrame([{'sentence': 'Testing this.', 'position':0},{'sentence': 'This.', 'position':1}])
     dasta3 = pd.DataFrame(['This is a test of a test.', "I'm not really sure what the fuck I'm doing."])
     dasta3.columns = ['sentence']
-    ses = Session([{'model': 'bert-base-uncased', 'layerLow': 12, 'layerUp': 12, 'compFunc': 'cls', 'sentence': dasta3 , 'batchsize': 16, 'devices': {'name': ['cuda:1', 'cuda:2']}}])
+    ses = Session([{'model': '/home/tardis/Documents/uned/PFG/AllSpark/src/aspark_server/irequest/models/bert-base-uncased', 'layerLow': 12, 'layerUp': 12, 'compFunc': 'cls', 'sentence': dasta3 , 'batchsize': 16, 'devices': {'name': ['cuda:1', 'cuda:2']}}])
                     #{'model': 'bert-base-uncased', 'layerLow': 12, 'layerUp': 12, 'compFunc': 'cls', 'data': xdatasett , 'batchsize': 16, 'devices': {'name': ['cuda:2']}}])
     #ses = Session(12, [123, 'bert-base-uncased', [12,12], 'f_ind', ["Testing this.","this."] , 6, ["cuda:1","cuda:2"]])
     print(ses.session_run())

@@ -32,6 +32,6 @@ class Compbase():
     def compose(self):
         """
         This is the method specialized in the composition of word embeddings to sentences.
-        Each class should make its own implementation.
+        Sets the contract for the classes to implement it
         """
         pass

@@ -37,6 +37,18 @@ function createWindow() {
             
             if (address=='default') {
                 subpyserv = require('child_process').spawn('python3', ['./src/aspark_server/server_main.py']);
+                subpyserv.stdout.on('data', (data) => {
+                    console.log(`stdout: ${data}`);
+                  });
+                  
+                  subpyserv.stderr.on('data', (data) => {
+                    console.error(`stderr: ${data}`);
+                  });
+                  
+                  subpyserv.on('close', (code) => {
+                    console.log(`child process exited with code ${code}`);
+                  });
+
                 subpy = require('child_process').spawn('python3', ['./src/aspark_client/client_main.py']);
             } else {
                 subpy = require('child_process').spawn('python3', ['./src/aspark_client/client_main.py', String(address)]);
@@ -81,6 +93,7 @@ app.addListener('beforeunload', (ev) => {
     ev.returnValue = true;
   });
 app.whenReady().then(() => {
+    
     createWindow()
   })
     // Quit when all windows are closed.

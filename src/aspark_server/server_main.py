@@ -97,7 +97,7 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
                 ttokenizer = ts.AutoTokenizer.from_pretrained(model, cache_dir=model_cache) 
                 ttokenizer.save_pretrained(model_folder)                     #Save Tokenizer  
             except FileExistsError as e:
-                print(e)
+                print(f'Could not download the tokenizer. {e}')
             finally:
                 lock.release()
                 self._models_downloading.pop(model)
@@ -129,12 +129,16 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         
         
     def getModels(self, request, context):
+        """
+        Retrieves modelname, number of hidden layers of the model and number of parameters.
+
+        """
         models_response = compservice_pb2.ModelList()
         _model_list = []
         for modelcfg in self.model_list.values():
             _model_list.append(compservice_pb2.ModelStruct(name=modelcfg['_name_or_path'],
                                                         layers=modelcfg['num_hidden_layers'],
-                                                        size = modelcfg['num_param']))
+                                                        size = modelcfg['num_param']//100000000))
         
         models_response.model.extend(_model_list)
         return models_response
@@ -172,7 +176,6 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         del embed_dataset
         del r_embeds
         gc.collect()
-        print('se llega aquí?')
 
     def getDevices(self, request, context):
         devices = compservice_pb2.DeviceList()
@@ -220,12 +223,12 @@ def serve():
 if __name__ == '__main__':
     """ dasta3 = pd.DataFrame(['Testing this.', "This."])
     dasta3.columns = ['sentence']
-    ses = session.Session([{'model': 'bert-base-uncased', 'layerLow': 12, 'layerUp': 12, 'compFunc': 'cls', 'sentence': dasta3 , 'batchsize': 1, 'devices': {'name': ['cuda:1', 'cuda:2']}}])
-    ses_return = ses.session_run()
+    ses = session.Session([{'model': '/home/tardis/Documents/uned/PFG/AllSpark/src/aspark_server/irequest/models/gpt2', 'layerLow': 12, 'layerUp': 12, 'compFunc': 'cls', 'sentence': dasta3 , 'batchsize': 1, 'devices': {'name': ['cuda:1', 'cuda:2']}}])
+    ses_return = ses.session_run() 
 
 
 
-    print(ses_return) """
+    print(ses_return)   """
     
     serve()
        

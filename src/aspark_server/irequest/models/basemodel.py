@@ -14,7 +14,13 @@ class Basemodel():
         self.tokenizer=AutoTokenizer.from_pretrained(modelname)
         self.model= self._model_instanciation()
         self.special_mask = None
+        self.pad = True #Pad default
+
     def _model_instanciation(self):
+        """
+        Creates the model object from model file. If the computing device is not the
+        CPU, it sends the model to the selected device's memory.
+        """
         model = AutoModel.from_pretrained(self.modelname)
         if not "cpu" in self.devices:
             model = model.to(self.devices)
@@ -36,10 +42,22 @@ class Basemodel():
         return _tokens
     
     def inference(self, tokens):
+        """
+        Sends the batch of tokens to the model for the feed forward pass.
+        """
         return self.model(**tokens, output_hidden_states=True)
     
     def to(self, device):
+        """
+        Sends model to device's memory.
+        """
         self.model = self.model.to(device)
         return self
+    
+    def paddding(self):
+        """
+        Getter for pad
+        """
+        return self.pad
 
 

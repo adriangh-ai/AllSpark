@@ -5,8 +5,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parents[2])) #Work Path
 
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 import dash_uploader as du
 
 from app import app
@@ -213,6 +213,7 @@ if __name__=='__main__':
     if len(sys.argv) > 1:
         callbacks_req.request_server = callbacks_req.grpc_if_start(sys.argv[1])
     
+    print('wtf')
     wsgi_port = 42000 # <--- get parameter from electronjs main
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -227,7 +228,7 @@ if __name__=='__main__':
         sock.close()
 
     print(wsgi_port)
-    serve(app.server, host='localhost', port=wsgi_port)
+    serve(app.server, host='localhost', port=wsgi_port, cleanup_interval=36000, channel_timeout=36000)
     
     """    import grpc_if_methods as g
         test= g.Server_grpc_if("localhost:42001")

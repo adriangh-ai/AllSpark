@@ -9,9 +9,9 @@ import numpy as np
 
 from dash.dependencies import ALL, Input, MATCH, Output, State
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
-import dash_table
+from dash import dcc
+from dash import html
+from dash import dash_table
 import pandas
 from app import app
 
@@ -262,7 +262,11 @@ def figure_update(n_clicks, tab_val, pca1, pca2, pca3, tsneper, tsnelearn, tsnei
     
     return inf_tab.dimred_funct.graph_run(points, inf_tab.get_sentence_list())
 
-#### Similarity
+
+###################
+#### Similarity####
+###################
+
 @app.callback(
     Output({'type':'simil-table-div', 'index':MATCH}, 'children'),
     Input({'type':'plot-graph', 'index':MATCH}, 'clickData'),
@@ -289,6 +293,7 @@ def similarity_table(clickdata,valuesim, valueb ,selected,id,fig):
         
     sorted_sentences = pandas.DataFrame({'A' : []})
     if clickdata:
+        print(clickdata)
         vector1 = points[clickdata['points'][0]['pointNumber']]
         simil_array = []
         simil_method = 'distance'
@@ -300,7 +305,7 @@ def similarity_table(clickdata,valuesim, valueb ,selected,id,fig):
             simil_array = inf_tab.simil.icmb(vector1, inf_tab.embeddings, valueb)
         
         simil_array = inf_tab.simil.sorted_simil(simil_array,simil_method)[:10]
-
+        print(simil_array)
         sorted_sentences = pandas.DataFrame([inf_tab.dataset.loc[i,inf_tab.text_column].values for i in simil_array]
                                             , columns={'Sentence Similarity'})
 

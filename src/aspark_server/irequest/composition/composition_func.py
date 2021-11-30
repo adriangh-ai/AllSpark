@@ -1,6 +1,5 @@
 from .basecomp import Compbase
 
-import itertools
 import torch
 
 class Comp_factory():

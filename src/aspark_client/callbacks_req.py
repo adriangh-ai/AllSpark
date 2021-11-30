@@ -1,9 +1,9 @@
 import dash
 from dash.dependencies import ALL, MATCH, Input, Output, State
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 import dash_daq as daq
-import dash_table
+from dash import dash_table
 
 
 from difflib import get_close_matches
@@ -14,6 +14,7 @@ import base64
 
 import pandas
 import numpy
+
 from nltk import tokenize
 
 from app import app
@@ -35,9 +36,10 @@ def _modelrepo_update():
     Gets a list of the models from the Hugging Face Model Hub, that contains a repository of all available models.
     Returns a list with the models ID (unique id)
     """
+    print('Fetching data from HuggingFace.co...')
     models = [{'label':'Network Error'}]
     try:
-        models = requests.get(f"https://huggingface.co/api/models", params = {"sort":"modelId"}).json()
+        models = requests.get(f"https://huggingface.co/api/models").json()#, params = {"sort":"modelId"}).json()
         models = set(i["modelId"] for i in models)
     except ConnectionError as e:
         print(e.strerror)
@@ -93,7 +95,7 @@ def draw_memory_gauge(clicks, children, data, value):
 
     for key in request_record.keys():
         for device in request_record[key].devices:
-            _dev_mem[device] = _dev_mem.get(device,0) + data[request_record[key].model]['size']/100000000 + 0.01*value
+            _dev_mem[device] = _dev_mem.get(device,0) + data[request_record[key].model]['size'] + 0.01*value
 
     _lsgauge = []
     for dev in [i for i in request_server.getDevices()]:

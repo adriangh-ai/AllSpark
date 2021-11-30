@@ -53,7 +53,7 @@ class dim_reduct():
         components = pd.DataFrame(components)
         components['sentence'] = sentences
         fig = px.scatter_3d(components, x=0, y=1, z=2, template='plotly_dark', hover_data=['sentence'])
-        fig.update_traces(marker=dict(size=4, line=dict(width=1, color='DarkSlateGrey')))
+        fig.update_traces(marker=dict(size=3, line=dict(width=1, color='DarkSlateGrey')))
         
         fig.update_traces(hoverinfo="text",selector=dict(type='scatter3d'))
 
