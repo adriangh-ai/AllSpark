@@ -10,6 +10,9 @@ from dash import html
 import dash_uploader as du
 
 from app import app
+
+du.configure_upload(app, f'{str(Path(__file__).parents[2])}/tmp')
+
 import callbacks_req
 import callbacks_inf
 
@@ -87,8 +90,12 @@ app.layout = html.Div(id='app-index',children=[
                                                 
                                             ) ]) ,  ], style={"display": "inline-block","position":"relative"})
                                     ]),
-                                    html.Div([
-                                        "Select Model",
+                                    html.Div(children=[
+                                        html.A(id='hf-link',href='', target='_blank',
+                                        children=[
+                                            html.P(title='Link to model page.')
+                                        ]),
+                                        html.P("Select Model"),
                                         dcc.Store(id='model-data-store'),
                                         dcc.RadioItems( id='block-models',
                                             options=[],
@@ -213,7 +220,6 @@ if __name__=='__main__':
     if len(sys.argv) > 1:
         callbacks_req.request_server = callbacks_req.grpc_if_start(sys.argv[1])
     
-    print('wtf')
     wsgi_port = 42000 # <--- get parameter from electronjs main
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -228,8 +234,9 @@ if __name__=='__main__':
         sock.close()
 
     print(wsgi_port)
-    serve(app.server, host='localhost', port=wsgi_port, cleanup_interval=36000, channel_timeout=36000)
+    serve(app.server, host='localhost', port=wsgi_port)
     
+    #TEST CASE
     """    import grpc_if_methods as g
         test= g.Server_grpc_if("localhost:42001")
         print(test.downloadModel('bert-base-uncased'))

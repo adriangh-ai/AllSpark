@@ -6,10 +6,6 @@ service compservice {
     rpc deleteModel(Model) returns (Response) {}
     rpc getModels(Empty) returns (ModelList) {}
 
-    rpc updloadDataset(stream Dataset) returns (Response) {}
-    rpc deleteDataset(DatasetName) returns (Response) {}
-    rpc getDatasets(Empty) returns (DatasetList) {}
-
     rpc inf_session(Session) returns  (stream EmbeddingDataSet) {}
 
     rpc getDevices(Empty) returns (DeviceList) {}
@@ -31,22 +27,6 @@ message ModelStruct {
     int32 layers =2;
     int32 size = 3;
 }
-
-message Dataset {
-    message Sentence {
-        int32 position = 2;
-        string sentence = 1;
-    }
-    repeated Sentence sentence_data = 1;
-}
-
-message DatasetList {
-    int32 dummy3 = 1;
-}
-message DatasetName {
-    int32 dummy3 = 1;
-}
-
 
 message EmbeddingDataSet {
     message Embedding {

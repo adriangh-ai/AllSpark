@@ -292,6 +292,24 @@ def update_model_list(valuedown, data):
 def clear_model_dropdown_selection(n_clicks):
     return None
 
+@app.callback(
+    Output('hf-link', 'href'),
+    Input('block-models', 'value')
+)
+def link_to_model_page(value):
+    if not value:
+        raise dash.exceptions.PreventUpdate
+    return f'http://huggingface.co/{value}'
+
+@app.callback(
+    Output('hf-link', 'children'),
+    Input('block-models', 'value')
+)
+def link_to_model_page(value):
+    if not value:
+        raise dash.exceptions.PreventUpdate
+    return html.P(f'http://huggingface.co/{value}')
+
 ### DELETE ###
 @app.callback(
     Output('delete-model-button', 'style'),

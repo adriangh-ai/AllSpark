@@ -1,0 +1,1 @@
+const AllSpark = require('.')

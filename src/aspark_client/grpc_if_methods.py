@@ -16,13 +16,6 @@ class Server_grpc_if():
         _response = {i.name : {'layers':i.layers, 'size':i.size} for i in _response}
         return _response
 
-    def updloadDataset(self, Dataset):
-        pass 
-    def deleteDataset(self, DatasetName):
-        pass 
-    def getDatasets(self, Empty):
-        pass 
-
     def inf_session(self, _record, tab_record):
         session_pb = compservice_pb2.Session()
         _request_list = []

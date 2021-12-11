@@ -11,9 +11,23 @@ import umap
 from itertools import repeat
 
 class dim_reduct():
+    """
+    Class that contains the method involved in dimensionality reduction
+    """
     def __init__(self):
         pass
     def pca(self, embeddings, x=0, y=1, z=2, dim_red = 10):
+        """
+        PCA implementation
+        
+        Args:
+            embeddings(nArray): numpy array with the sentence embeddings
+            x,y,z(int): principal component dimension numbers sorted by relevance
+            dim_red(int): number of dimensions to return
+        
+        Return:
+            nArray - numpy array
+        """
         output = embeddings
         min_size = min([len(embeddings), len(embeddings[0])])
         if not min_size<3:
@@ -24,6 +38,18 @@ class dim_reduct():
         return output
 
     def tsne(self, embeddings, perplexity=30, it=250, learning_r=200): #per 5-50 learning 2-300
+        """
+        t-sne implementantion
+
+         Args:
+            embeddings(nArray): numpy array with the sentence embeddings
+            perplexity(int): Perplexity 
+            it(int): n of iterations
+            learning_r(int): learning rate
+        
+        Return:
+            nArray - numpy array
+        """
         output = []
         min_size = min([len(embeddings), len(embeddings[0])])
         
@@ -43,6 +69,16 @@ class dim_reduct():
         return output
 
     def umap(self, embeddings, neighb=15):
+        """
+        umap implementation
+
+        Args:
+            embeddings(nArray): numpy array with the sentence embeddings
+            neighb(int): n of neighbors to take into account
+
+        Return:
+            nArray - numpy array
+        """
         output = embeddings
         if not len(embeddings)<5:
             umap_i = umap.UMAP(n_components=3, n_neighbors=neighb)
@@ -50,6 +86,16 @@ class dim_reduct():
         return output
     
     def graph_run(self, components, sentences):
+        """
+        Function that implements the graphing methods with plotly
+
+        Args:
+            components(nArray): 3 dimensional numpy array
+            sentences(DataFrame): Panda's dataframe with the sentences
+        
+        Returns:
+            fig : Plotly figure
+        """
         components = pd.DataFrame(components)
         components['sentence'] = sentences
         fig = px.scatter_3d(components, x=0, y=1, z=2, template='plotly_dark', hover_data=['sentence'])
@@ -86,8 +132,14 @@ class sent_simil():
     def __init__(self):
         pass
     def cosine(self, vector, embeddings):
+        """
+        Wrapper for cosine similarity
+        """
         return cosine_similarity([vector], embeddings)[0]
     def euclidean(self, vector, embeddings):
+        """
+        Wrapper for euclidean distance
+        """
         return euclidean_distances([vector], embeddings).tolist()[0]
     def icmb(self, vector, embeddings, b = 1):
         """
@@ -121,6 +173,9 @@ class sent_simil():
 
 
 if __name__=='__main__':
+    """
+    TEST CASES
+    """
     vectors = np.random.rand(500, 768)
 
     a = [f'{i}' for i in range(500)]

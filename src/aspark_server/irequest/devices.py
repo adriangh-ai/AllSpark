@@ -31,6 +31,9 @@ class Dev:
                                          ) if self.device_type=='gpu' else psutil.virtual_memory()[1]/1024/1024/1024)
         return self.memory_free
     def _mem_available(self):
+        """
+        Calculates the memory available on the CUDA device through torch library or psutil otherwise.
+        """
         return torch.cuda.get_device_properties(self.id
                     ).total_memory if self.device_type=='gpu' else psutil.virtual_memory()[0]  #Total memory
 

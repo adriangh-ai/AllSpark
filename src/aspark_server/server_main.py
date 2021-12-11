@@ -49,6 +49,9 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         self._models_downloading = {}                        #Download temporary record
     
     def _get_models_from_file(self):
+        """
+        Fetches the model data stored from file.
+        """
         data = {}
         if MODEL_LIST_JSON.exists():
             with open(MODEL_LIST_JSON, 'r') as data_file:
@@ -111,6 +114,16 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         return compservice_pb2.Response(completed=True)
 
     def deleteModel(self, request, context):
+        """
+        Deletes model given by modelname from the server storage.
+
+        Args:
+            request - compservice_pb2
+            context - given by grpc
+        
+        Return:
+            compservice_pb2
+        """
         model = request.modelname
         try:
             if model in self.model_list:
@@ -132,6 +145,8 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         """
         Retrieves modelname, number of hidden layers of the model and number of parameters.
 
+        Return:
+            models_response - compservice_pb2
         """
         models_response = compservice_pb2.ModelList()
         _model_list = []
@@ -143,10 +158,18 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         models_response.model.extend(_model_list)
         return models_response
 
-    def upl_dataset():
-        pass
-
     def inf_session(self, request, context):
+        """
+        Captures the client message containing the inference session data. Instatiates Session
+        starts the inference and post-process the data.
+
+        Args:
+            request - compservice_pb2
+        
+        Return:
+            embed_dataset - compservice_pb2
+
+        """
         print(type(request))
         sessionData = [MessageToDict(message) for message in request.request]
       
@@ -197,8 +220,8 @@ def serve():
     """
     server= grpc.server(ThreadPoolExecutor(max_workers=20)
                         ,options=[
-                            ('grpc.max_send_message_length', 512 * 1024 * 1024)
-                            ,('grpc.max_receive_message_length', 512 * 1024 * 1024)
+                            ('grpc.max_send_message_length', 512 * 1024 * 1024)     #Increase maximum message size 
+                            ,('grpc.max_receive_message_length', 512 * 1024 * 1024) #for long vector matrices
                             ]
                         )
     
@@ -207,7 +230,7 @@ def serve():
         server.stop(0)
 
     compservice_pb2_grpc.add_compserviceServicer_to_server(CompServiceServicer(), server)
-    server.add_insecure_port('[::]:42001') #add local from params? add secure?
+    server.add_insecure_port('[::]:42001') 
     server.start()
     print('Server started.')
     
