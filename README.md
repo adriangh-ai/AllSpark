@@ -6,4 +6,6 @@ Desde el directorio raíz:
     sudo apt-get install nodejs npm </br>
     npm install --save-dev electron </br>
     npm install is-reachable </br>
-Para instalación de las dependencias, usar installer.sh</br>
+Para instalación de las dependencias, usar installer.sh.</br>
+
+Iniciar con npm start.
