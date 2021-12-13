@@ -68,6 +68,9 @@ request_server = grpc_if_methods.Server_grpc_if("localhost:42001") #Instanciates
     Input('main-tab', 'children')
 )
 def close_tab_selector(children):
+    """
+    Iterates through the active tabs and returns its value to the selector
+    """
     return [{'label': f'Tab {key}', 'value':key} for key in tab_record.keys()]
 
 @app.callback (
@@ -76,6 +79,9 @@ def close_tab_selector(children):
     State('tab-number-selector', 'value')
 )
 def close_tab(clicks,selection):
+    """
+    Takes the tab from the record so it will not be displayed.
+    """
     if not clicks:
         raise dash.exceptions.PreventUpdate
     tab_record.pop(selection, None)
@@ -91,6 +97,11 @@ def close_tab(clicks,selection):
     State('batchsize-input', 'value')
 )
 def draw_memory_gauge(clicks, children, data, value):
+    """
+    Controls the memory gauge component. It asks the server for computing device information
+    displays an estimation of total memory, and memory availabe after adding the request, 
+    accounting for model memory and batchsize, for every device in the returned list.
+    """
     _dev_mem = {}
 
     for key in request_record.keys():
@@ -122,6 +133,10 @@ def draw_memory_gauge(clicks, children, data, value):
     Input({'type':'request-delete-button','index':ALL}, 'value')
 )
 def fill_request_table(value1, value2):
+    """
+    Controls the request table displayed, iterating through request_record, adding its data to
+    the table.
+    """
     _children = []
     if len(request_record) > 0:
         _children.append(
@@ -158,12 +173,16 @@ def fill_request_table(value1, value2):
             )
         )
     return _children
+
 @app.callback(
     Output({'type':'request-delete-button','index':MATCH}, 'value'),
     Input({'type':'request-delete-button','index':MATCH}, 'n_clicks'),
     State({'type':'request-delete-button','index':MATCH}, 'id')
 )
 def remove_from_request_list(n_clicks, id):
+    """
+    Controls the button that deletes the inference request from request_record.
+    """
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
     del request_record[id['index']]
@@ -178,6 +197,11 @@ def remove_from_request_list(n_clicks, id):
     #State('main-tab', 'children')
 )
 def add_inf_tab(n_clicks):
+    """
+    Takes the request_record list, makes a copy and clears the original. Initilises the 
+    tab and sends the inference request to the server, the proceeds to process the server
+    output. Returns the list of keys mapping to tabs that hold the inference results.
+    """
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
 
@@ -206,6 +230,9 @@ def add_inf_tab(n_clicks):
     State('main-tab', 'children')
 )
 def update_layout(data, clicks, saved_clicks, children):
+    """
+    Updates the layout of the main page.
+    """
     _keys = list(tab_record.keys())
     print(_keys)
     _children = []
@@ -239,7 +266,7 @@ def model_search(search_value, options):
     """
     if not search_value:
         raise dash.exceptions.PreventUpdate
-    return_models = get_close_matches(search_value, _model_list, 10,0.5)
+    return_models = get_close_matches(search_value, _model_list, 10,0.3)
     options = [{'label': i, 'value': i} for i in return_models]
     return options
 
@@ -262,6 +289,9 @@ def activate_download_button(value):
     State('model-dropdown', 'value')
 )
 def download_model(n_clicks, value):
+    """
+    Control for the download button
+    """
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
     return request_server.downloadModel(value).completed
@@ -274,6 +304,9 @@ def download_model(n_clicks, value):
     Input('block-models', 'label')
 )
 def update_model_list_store(valuedown, valuedel, label):
+    """
+    Probes the server for the list of downloaded models.
+    """
     return request_server.getModels()
 
 @app.callback(
@@ -282,6 +315,9 @@ def update_model_list_store(valuedown, valuedel, label):
     State('model-data-store', 'data')
 )
 def update_model_list(valuedown, data):
+    """
+    Controls the selector that displays the downloaded models.
+    """
     if (not valuedown == False):
         options = [{'label': i, 'value': i} for i in [str(i) for i in data]] 
     return options
@@ -297,6 +333,9 @@ def clear_model_dropdown_selection(n_clicks):
     Input('block-models', 'value')
 )
 def link_to_model_page(value):
+    """
+    Generates and displays a link to the model page in HuggingFace repository.
+    """
     if not value:
         raise dash.exceptions.PreventUpdate
     return f'http://huggingface.co/{value}'
@@ -331,6 +370,9 @@ def activate_delete_button(value, style):
     State('block-models', 'value')
 )
 def delete_model(n_clicks, value):
+    """
+    Controls the delete model button.
+    """
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
     return request_server.deleteModel(value).completed
@@ -341,6 +383,9 @@ def delete_model(n_clicks, value):
     Input('block-models', 'value')
 )
 def activate_slider(value):
+    """
+    Makes the slider interactive.
+    """
     return True if not value else False
 
 @app.callback(
@@ -349,6 +394,9 @@ def activate_slider(value):
     State('model-data-store', 'data')
 )
 def update_layer_slider(value, data):
+    """
+    Updates the slider layout with the number of layers given the model selected.
+    """
     if not value:
         raise dash.exceptions.PreventUpdate
     return data[value]['layers'] 
@@ -430,7 +478,20 @@ def make_table(contents, df, filename):
     Input('file-ul-req', 'contents'),
     State('file-ul-req', 'filename'))
 def update_data_ul(list_of_contents, list_of_names):
-    children=[]
+    """
+    Outputs the table generated, given the dataset.
+
+    Args:
+        list_of_contents(b64): The file in b64 format
+        list_of_names(string): The name of the file
+    
+    """
+    children=[
+        html.P('There was an error processing the file. Make sure the size is under 1GB.')
+    ]
+    if not list_of_names:
+        raise dash.exceptions.PreventUpdate
+    
     if (list_of_contents is not None) and not (len(list_of_contents)==0):
         print(list_of_names)
         print(type(list_of_contents))
@@ -469,6 +530,9 @@ def adjust_comp_selection_to_model(value,options):
     Input('select-devices', 'options')
 )
 def update_devices_list(options):
+    """
+    Probes the server for the available computing devices.
+    """
     options = [{'label': f"{dev.device_name} ID: {dev.id}", 
                 'value': dev.id} for dev in [i for i in request_server.getDevices()]]
     return options
@@ -500,6 +564,10 @@ def add_request(n_clicks
                 ,valuecomp
                 ,valuedev
                 ,tab_index):
+    """
+    Collects all the information given by the user from the different page elements
+    and initialises the request object, storing it in request_record.
+    """
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
     if not (model and sel_columns and valuecomp and valuedev):

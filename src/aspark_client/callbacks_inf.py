@@ -27,6 +27,19 @@ class inference_tab():
     """
     This class contains the details of the Inference Tab it represents,
     identified by the index argument.
+
+    Params:
+        index(int):         index in the tab dictionary
+        model(string):      name of the model
+        dataset(DataFrame): original dataset with the sentences
+        filename(string):   name of the dataset file
+        text_column(string):selected column for the sentences
+        layer_low(int):     lower model layer
+        layer_up(int):      upper model layer
+        comp_func(string):  name of the chosen composition function
+        batchsize(int):     batchsize for inference
+        devices(list)       list of chosen devices for the operations
+        embeddings(nArray): output embeddings from the inference process
     """
     def __init__(self
                 ,index
@@ -56,171 +69,195 @@ class inference_tab():
         self.simil = sent_simil()
     
     def set_embeddings(self, embed_dict):
+        """
+        Sets the sentence embeddings given by the server as dictionary, converts them
+        to numpy array.
+
+        Args:
+            embed_dict: dictionary containing the embeddings
+        """
         embed_stack = []
         for sentence in embed_dict:
             embed_stack.append(np.array(sentence['value'], dtype=np.float32))
         self.embeddings = np.stack(embed_stack)
+
     def get_sentence_list(self):
+        """
+        Getter for dataset.
+        """
         #return self.dataset[self.text_column].squeeze().to_list()
         return self.dataset[self.text_column]
     
     
     def generate_tab(self):
-        new_tab = dcc.Tab(label = f'Inference {self.index}'
+        """
+        Generates the tab layout given the class attributes after the inference process.
+        """
+        if (1,1,1) in self.embeddings:
+            new_tab = dcc.Tab(label = f'Inference {self.index}'
                             ,id={'type':'inf-tab', 'index': self.index }
                             ,className='main-tabs', children=[
-                    html.Div(  children=[
-                        html.Div( children =[
-                            html.Div( children=[
-                                dcc.Tabs( id={'type':'dim-red-tabs', 'index': self.index}, 
-                                className='main-tabs',
-                                children=[
-                                    dcc.Tab(label='PCA',id={'type':'PCA-tab', 'index': self.index }, 
-                                    className='main-tabs',
-                                    children=[
-                                        html.P('Select components: sorted by "explained variance"'),
-                                        html.Div(  children=[
-                                            html.H5('Component 1:'),
-                                            dcc.Dropdown(id={'type':'pca-dim1-dd', 'index': self.index },
-                                                options=[
-                                                    {'label':f'#{i}.', 'value':i} for i in list(range(1,11))
-                                                ],
-                                                value=1
-                                            )
-                                        ]),
-                                        html.Div(  children=[
-                                            html.H5('Component 2:'),
-                                            dcc.Dropdown(id={'type':'pca-dim2-dd', 'index': self.index },
-                                                options=[
-                                                    {'label':f'#{i}.', 'value':i} for i in list(range(1,11))
-                                                ],
-                                                value=2
-                                            )
-                                        ]),
-                                        html.Div(  children=[
-                                            html.H5('Component 3:'),
-                                            dcc.Dropdown(id={'type':'pca-dim3-dd', 'index': self.index },
-                                                options=[
-                                                    {'label':f'#{i}.', 'value':i} for i in list(range(1,11))
-                                                ],
-                                                value=3
-                                            )
-                                        ]),
-                                    ], value='pca-tab'),
-                                    dcc.Tab(label='T-SNE', 
-                                    className='main-tabs',
-                                    children=[
-                                        html.Div( children =[
-                                        html.P("Perplexity:"),
-                                        dcc.Slider(id={'type':'tsne-perp-slider', 'index': self.index },
-                                            value=30,
-                                            min = 5,
-                                            max = 50,
-                                            marks = {i:f'{i}' for i in range(5,51,5)}
-                                        )
-                                        ]),
-                                        html.Div( children =[
-                                        html.P("Learning rate:"),
-                                        dcc.Slider(id={'type':'tsne-learnrate-slider', 'index': self.index },
-                                            value=200,
-                                            min=10,
-                                            max=1000,
-                                            step=10,
-                                            marks = {i:f'{i}' for i in range(10,1001,100)}
-                                        )
-                                        ]),
-                                        html.Div( children =[
-                                        html.P("Iterations:"),
-                                        dcc.Slider(id={'type':'tsne-iter-slider', 'index': self.index },
-                                            value = 300,
-                                            min=1,
-                                            max=5000,
-                                            step=50,
-                                            marks = {i:f'{i}' for i in range(1,5001,1002)}
-                                        )
-                                        ])
-                                    ], value='tsne-tab'),
-                                    dcc.Tab(label='UMAP', 
-                                    className='main-tabs',
-                                    children=[
-                                        html.Div( children =[
-                                        html.P('Neighbors:'),    
-                                        dcc.Slider(id={'type':'umap-neighb-slider', 'index': self.index },
-                                            value=15,
-                                            min=2,
-                                            max=200,
-                                            marks = {i:f'{i}' for i in range(2,201,42)}
-                                        )
-                                        ])
-                                    ], value='umap-tab')
-                                ]),
-                                html.Button('RE-PLOT',id={'type':'replot-button', 'index': self.index })
-                            ]),
+                                html.Div(
+                                    html.P('There was an error processing the data. Please be sure to check that the model and parameters are correct.',
+                                    style={'text-align':'center'})
+                                )
+                            ])
+        else:
+            new_tab = dcc.Tab(label = f'Inference {self.index}'
+                                ,id={'type':'inf-tab', 'index': self.index }
+                                ,className='main-tabs', children=[
+                        html.Div(  children=[
+                            html.Div( children =[
                                 html.Div( children=[
-                                    html.P("Sentence Similarity"),
-                                    dcc.RadioItems(id={'type':'similarity-radio', 'index': self.index },
-                                        options=[
-                                            {'label':'No Similarity', 'value': False},
-                                            {'label': 'Cosine', 'value':'cos'},
-                                            {'label':'ICMB', 'value':'icmb'}
-                                        ],
-                                        value=False
-                                    ),
-                                    html.Div( children =[
-                                        html.P("B Selector"),
-                                        dcc.Slider(id={'type':'b-slider', 'index': self.index },
-                                            value = 1,
-                                            min=1,
-                                            max=2,
-                                            step=0.1,
-                                            marks = {i:f'{round(i,2)}' for i in np.arange(1,2,0.1)}
-                                        )
-                                        ]),
+                                    dcc.Tabs( id={'type':'dim-red-tabs', 'index': self.index}, 
+                                    className='main-tabs',
+                                    children=[
+                                        dcc.Tab(label='PCA',id={'type':'PCA-tab', 'index': self.index }, 
+                                        className='main-tabs',
+                                        children=[
+                                            html.P('Select components: sorted by "explained variance"'),
+                                            html.Div(  children=[
+                                                html.H5('Component 1:'),
+                                                dcc.Dropdown(id={'type':'pca-dim1-dd', 'index': self.index },
+                                                    options=[
+                                                        {'label':f'#{i}.', 'value':i} for i in list(range(1,11))
+                                                    ],
+                                                    value=1
+                                                )
+                                            ]),
+                                            html.Div(  children=[
+                                                html.H5('Component 2:'),
+                                                dcc.Dropdown(id={'type':'pca-dim2-dd', 'index': self.index },
+                                                    options=[
+                                                        {'label':f'#{i}.', 'value':i} for i in list(range(1,11))
+                                                    ],
+                                                    value=2
+                                                )
+                                            ]),
+                                            html.Div(  children=[
+                                                html.H5('Component 3:'),
+                                                dcc.Dropdown(id={'type':'pca-dim3-dd', 'index': self.index },
+                                                    options=[
+                                                        {'label':f'#{i}.', 'value':i} for i in list(range(1,11))
+                                                    ],
+                                                    value=3
+                                                )
+                                            ]),
+                                        ], value='pca-tab'),
+                                        dcc.Tab(label='T-SNE', 
+                                        className='main-tabs',
+                                        children=[
+                                            html.Div( children =[
+                                            html.P("Perplexity:"),
+                                            dcc.Slider(id={'type':'tsne-perp-slider', 'index': self.index },
+                                                value=30,
+                                                min = 5,
+                                                max = 50,
+                                                marks = {i:f'{i}' for i in range(5,51,5)}
+                                            )
+                                            ]),
+                                            html.Div( children =[
+                                            html.P("Learning rate:"),
+                                            dcc.Slider(id={'type':'tsne-learnrate-slider', 'index': self.index },
+                                                value=200,
+                                                min=10,
+                                                max=1000,
+                                                step=10,
+                                                marks = {i:f'{i}' for i in range(10,1001,100)}
+                                            )
+                                            ]),
+                                            html.Div( children =[
+                                            html.P("Iterations:"),
+                                            dcc.Slider(id={'type':'tsne-iter-slider', 'index': self.index },
+                                                value = 300,
+                                                min=1,
+                                                max=5000,
+                                                step=50,
+                                                marks = {i:f'{i}' for i in range(1,5001,1002)}
+                                            )
+                                            ])
+                                        ], value='tsne-tab'),
+                                        dcc.Tab(label='UMAP', 
+                                        className='main-tabs',
+                                        children=[
+                                            html.Div( children =[
+                                            html.P('Neighbors:'),    
+                                            dcc.Slider(id={'type':'umap-neighb-slider', 'index': self.index },
+                                                value=15,
+                                                min=2,
+                                                max=200,
+                                                marks = {i:f'{i}' for i in range(2,201,42)}
+                                            )
+                                            ])
+                                        ], value='umap-tab')
+                                    ]),
+                                    html.Button('RE-PLOT',id={'type':'replot-button', 'index': self.index })
+                                ]),
+                                    html.Div( children=[
+                                        html.P("Sentence Similarity"),
+                                        dcc.RadioItems(id={'type':'similarity-radio', 'index': self.index },
+                                            options=[
+                                                {'label':'No Similarity', 'value': False},
+                                                {'label': 'Cosine', 'value':'cos'},
+                                                {'label':'ICMB', 'value':'icmb'}
+                                            ],
+                                            value=False
+                                        ),
+                                        html.Div( children =[
+                                            html.P("B Selector"),
+                                            dcc.Slider(id={'type':'b-slider', 'index': self.index },
+                                                value = 1,
+                                                min=1,
+                                                max=2,
+                                                step=0.1,
+                                                marks = {i:f'{round(i,2)}' for i in np.arange(1,2,0.1)}
+                                            )
+                                            ]),
 
-                                    html.Button('Save Session', id= {'type':'save-session'
-                                                                    ,'index': self.index },
-                                                                    style={'position':'fixed','bottom':200})
-                                    ])
-                            ],style={'display':'inline-block','width':'300px', 'min-width':'300px'}),
-                        
-                        html.Div( id = {'type' : 'graph-wrapper', 'index':self.index }, children = [
-                            dcc.Loading(id={'type':'loading-graph', 'index': self.index}, children = [
-                            dcc.Graph(id={'type':'plot-graph', 'index': self.index },
-                                style={'height':'100%'},
-                                responsive=True,
-                                config= {
-                                    'autosizable':True,
-                                    'displaylogo':False,
-                                    'fillFrame':True,
-                                    'modeBarButtons':'hover',
-                                    'displayModeBar':True,
-                                    'responsive': True
+                                        html.Button('Save Session', id= {'type':'save-session'
+                                                                        ,'index': self.index },
+                                                                        style={'position':'fixed','bottom':200})
+                                        ])
+                                ],style={'display':'inline-block','width':'300px', 'min-width':'300px'}),
+                            
+                            html.Div( id = {'type' : 'graph-wrapper', 'index':self.index }, children = [
+                                dcc.Loading(id={'type':'loading-graph', 'index': self.index}, children = [
+                                dcc.Graph(id={'type':'plot-graph', 'index': self.index },
+                                    style={'height':'100%'},
+                                    responsive=True,
+                                    config= {
+                                        'autosizable':True,
+                                        'displaylogo':False,
+                                        'fillFrame':True,
+                                        'modeBarButtons':'hover',
+                                        'displayModeBar':True,
+                                        'responsive': True
 
-                                }
-                                )],
-                        style={'display':'inline-block'}) ]),
-                        
-                        ], style={'display':'flex'
-                                ,'display':'-webkit-box'
-                                ,'display':'-webkit-flex'
-                                ,'-webkit-flex-diredtion':'row'
-                                ,'flex-direction':'row'
-                                ,'align-items':'stretch'}),
-                        html.Div(id = {'type':'simil-table-div', 'index': self.index }, children=[
-                                     dash_table.DataTable(
-                                        id = {'type':'simil-table', 'index': self.index },
-                                        data = [],
-                                        columns = [{'name':'Sentence Similarity', 'id':'Sentence Similarity'}], 
-                                        style_table={'overflowY': 'scroll'},
-                                        style_cell={'textAlign':'left'},
-                                        column_selectable='single'
-                                    ),
-                            ],
-                            style={'position':'fixed',
-                                    'bottom':0,
-                                    'width': '100%'}
-                        )
-            ])
+                                    }
+                                    )],
+                            style={'display':'inline-block'}) ]),
+                            
+                            ], style={'display':'flex'
+                                    ,'display':'-webkit-box'
+                                    ,'display':'-webkit-flex'
+                                    ,'-webkit-flex-diredtion':'row'
+                                    ,'flex-direction':'row'
+                                    ,'align-items':'stretch'}),
+                            html.Div(id = {'type':'simil-table-div', 'index': self.index }, children=[
+                                        dash_table.DataTable(
+                                            id = {'type':'simil-table', 'index': self.index },
+                                            data = [],
+                                            columns = [{'name':'Sentence Similarity', 'id':'Sentence Similarity'}], 
+                                            style_table={'overflowY': 'scroll'},
+                                            style_cell={'textAlign':'left'},
+                                            column_selectable='single'
+                                        ),
+                                ],
+                                style={'position':'fixed',
+                                        'bottom':0,
+                                        'width': '100%'}
+                            )
+                ])
         return new_tab
 
 #######################
@@ -242,6 +279,10 @@ class inference_tab():
     State({'type':'plot-graph', 'index':MATCH}, 'id')
 )
 def figure_update(n_clicks, tab_val, pca1, pca2, pca3, tsneper, tsnelearn, tsneiter, uneigh, id):
+    """
+    Plots the graph, with the dimensionality reduction chosen by the tab selection, using the page
+    information given by the user with the chosen parameters.
+    """
     indx = id['index']
     inf_tab = tab_record.get(indx, [])
     
@@ -277,6 +318,10 @@ def figure_update(n_clicks, tab_val, pca1, pca2, pca3, tsneper, tsnelearn, tsnei
     State({'type':'plot-graph', 'index':MATCH}, 'figure')
 )
 def similarity_table(clickdata,valuesim, valueb ,selected,id,fig):
+    """
+    Takes the selecte point from the graph, then perfroms the selected similarity function
+    over caller tab embeddings.
+    """
     indx = id['index']
     inf_tab = tab_record.get(indx, [])
     
@@ -337,6 +382,10 @@ def similarity_table(clickdata,valuesim, valueb ,selected,id,fig):
     State({'type':'save-session','index' : MATCH}, 'id')
 )
 def save_session(n_clicks, id):
+    """
+    Save the sessions results (embeddings, modelname, filename, dataset column, chosen layers and
+    composition method) to file.
+    """
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
 
@@ -365,29 +414,3 @@ def save_session(n_clicks, id):
 
     #data_session.to_json(str(Path.joinpath(SAVED_FOLDER, f"testingsaved.json")))
     return 0
-
-""" @app.callback(
-    Output({'type':'dim-red-loading-output', 'index': MATCH}, 'loading-state'),
-    Input({'type':'dim-red-tabs', 'index': MATCH }, 'value'),
-    Input({'type':'graph-wrapper', 'index': MATCH }, 'children')
-)
-def graph_loading(value, value2):
-    print(app.title)
-    time.sleep(1)
-    return value2 """
-
-""" @app.callback(
-    Output({'type':'main-tab', 'index':MATCH}, 'children'),
-    Input({'type':'close-tab','index':MATCH}, 'n_clicks'),
-    State({'type':'close-tab','index':MATCH }, 'id'),
-    State('main-tab', 'children')
-)
-def close_tab(n_clicks, id, children):
-    if not n_clicks:
-        raise dash.exceptions.PreventUpdate
-    indx = id['index']
-    tab_keys = list(tab_record.keys())
-    del_index = tab_keys.index(indx)
-    del tab_record[indx]
-    children.pop(del_index)
-    return children """

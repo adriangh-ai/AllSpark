@@ -8,15 +8,47 @@ class Server_grpc_if():
                                                     ,('grpc.max_receive_message_length', 512 * 1024 * 1024)])
         self.stub = compservice_pb2_grpc.compserviceStub(self.channel)
     def downloadModel(self, model):
+        """
+        Sends the server a request to download the model given by "model"
+
+        Args:
+            model(str): modelname
+        
+        Returns:
+            boolean
+        """
         return self.stub.downloadModel(compservice_pb2.Model(modelname=model)) 
     def deleteModel(self, model):
+        """
+        Sends a deletion request to the server
+        
+        Args:
+            model(str): modelname
+        Rerturns:
+            boolean
+        """
         return self.stub.deleteModel(compservice_pb2.Model(modelname=model)) 
     def getModels(self):
+        """
+        Sends a request to get the downloaded model ata from the server.
+
+        Returns:
+            Dictionary
+        """
         _response = self.stub.getModels(compservice_pb2.Empty(empty=0)).model
         _response = {i.name : {'layers':i.layers, 'size':i.size} for i in _response}
         return _response
 
     def inf_session(self, _record, tab_record):
+        """
+        Sends an inference request to the server.
+
+        Args:
+            _record(dict): dictionary with the session inference requests.
+            tab_record(dict): dictionary containing the visualisation tab for the results.
+        Returns:
+            Request
+        """
         session_pb = compservice_pb2.Session()
         _request_list = []
 
@@ -44,6 +76,9 @@ class Server_grpc_if():
         for request in self.stub.inf_session(session_pb):
             yield request
     def getDevices(self):
+        """
+        Probes the server for the list of computing devices
+        """
         device_list = self.stub.getDevices(compservice_pb2.Empty(empty=0))
         for device in device_list.dev:
             yield device

@@ -201,6 +201,13 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         gc.collect()
 
     def getDevices(self, request, context):
+        """
+        Sends back name, id, total memory and free memory of all computation
+        devices in ls_dev.
+
+        Return:
+            DeviceList
+        """
         devices = compservice_pb2.DeviceList()
         _ls_dev = []
         for _device in self.ls_dev:

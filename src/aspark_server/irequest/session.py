@@ -1,3 +1,4 @@
+from concurrent.futures.process import _ExceptionWithTraceback
 import multiprocessing as mp
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
@@ -91,9 +92,10 @@ class Req_worker():
             cat_embeddings = pd.concat([self.partialdata, pd_embeddings], axis=1)
             cat_embeddings = cat_embeddings.sort_values(by='indx', ignore_index=True)
             cat_embeddings = cat_embeddings.drop(columns='indx')
+        
         except Exception as e:
             print(f'Encountered an error during processing. {e}')
-            return pd.DataFrame({'sentence': 'error', 0:[1], 1:[1], 2:[1]})
+            raise  
         
         finally:
             #Memory cleanup
@@ -161,15 +163,20 @@ class InferenceRequest():
                                 ,'partialdata':self.req_dataset[i:i+jump]
                                 ,'batchsize':self.batchsize
                                 ,'single_dev':self.devs[(i//jump)%len(self.devs)]})
-
+ 
         with ThreadPoolExecutor(max_workers=len(self.devs)) as ex:
             worker_ls = ex.map(self.worker_fn , parcial_inf)
-        
-        embeddings = self._join_ouputs(worker_ls)
-        
-        del self.req_dataset
-        gc.collect()
 
+            
+        try:
+            embeddings = self._join_ouputs(worker_ls)
+        except Exception as e:
+            print('Propagating Thread Error.')
+            raise
+        finally:
+            del self.req_dataset
+            gc.collect()
+        
         return embeddings
             
 
@@ -187,7 +194,12 @@ class Session():
         Return: DataFrame
         """
         inf = InferenceRequest(**args)
-        return inf.inference_run()
+        try:
+            output = inf.inference_run()
+        except Exception as e:
+            print('Error. Returning error value.')
+            return pd.DataFrame({'sentence': 'error', 0:[1], 1:[1], 2:[1]})
+        return output
 
     def session_run(self):
         """
