@@ -23,9 +23,10 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
-    "is-reachable": "^5.1.0"
+    "is-reachable": "^5.1.0",
+    "trim-newlines": "^4.0.2"
   },
-  "build" : {
+  "build": {
     "extraResources": [
       "src"
     ]
