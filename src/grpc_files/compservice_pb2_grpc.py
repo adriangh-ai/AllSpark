@@ -29,20 +29,20 @@ class compserviceStub(object):
                 request_serializer=compservice__pb2.Empty.SerializeToString,
                 response_deserializer=compservice__pb2.ModelList.FromString,
                 )
-        self.updloadDataset = channel.stream_unary(
-                '/compservice/updloadDataset',
-                request_serializer=compservice__pb2.Dataset.SerializeToString,
+        self.downloadStatic = channel.unary_unary(
+                '/compservice/downloadStatic',
+                request_serializer=compservice__pb2.Model.SerializeToString,
                 response_deserializer=compservice__pb2.Response.FromString,
                 )
-        self.deleteDataset = channel.unary_unary(
-                '/compservice/deleteDataset',
-                request_serializer=compservice__pb2.DatasetName.SerializeToString,
+        self.deleteStatic = channel.unary_unary(
+                '/compservice/deleteStatic',
+                request_serializer=compservice__pb2.Model.SerializeToString,
                 response_deserializer=compservice__pb2.Response.FromString,
                 )
-        self.getDatasets = channel.unary_unary(
-                '/compservice/getDatasets',
+        self.getStaticModels = channel.unary_unary(
+                '/compservice/getStaticModels',
                 request_serializer=compservice__pb2.Empty.SerializeToString,
-                response_deserializer=compservice__pb2.DatasetList.FromString,
+                response_deserializer=compservice__pb2.ModelStaticList.FromString,
                 )
         self.inf_session = channel.unary_stream(
                 '/compservice/inf_session',
@@ -77,19 +77,19 @@ class compserviceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def updloadDataset(self, request_iterator, context):
+    def downloadStatic(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def deleteDataset(self, request, context):
+    def deleteStatic(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def getDatasets(self, request, context):
+    def getStaticModels(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -125,20 +125,20 @@ def add_compserviceServicer_to_server(servicer, server):
                     request_deserializer=compservice__pb2.Empty.FromString,
                     response_serializer=compservice__pb2.ModelList.SerializeToString,
             ),
-            'updloadDataset': grpc.stream_unary_rpc_method_handler(
-                    servicer.updloadDataset,
-                    request_deserializer=compservice__pb2.Dataset.FromString,
+            'downloadStatic': grpc.unary_unary_rpc_method_handler(
+                    servicer.downloadStatic,
+                    request_deserializer=compservice__pb2.Model.FromString,
                     response_serializer=compservice__pb2.Response.SerializeToString,
             ),
-            'deleteDataset': grpc.unary_unary_rpc_method_handler(
-                    servicer.deleteDataset,
-                    request_deserializer=compservice__pb2.DatasetName.FromString,
+            'deleteStatic': grpc.unary_unary_rpc_method_handler(
+                    servicer.deleteStatic,
+                    request_deserializer=compservice__pb2.Model.FromString,
                     response_serializer=compservice__pb2.Response.SerializeToString,
             ),
-            'getDatasets': grpc.unary_unary_rpc_method_handler(
-                    servicer.getDatasets,
+            'getStaticModels': grpc.unary_unary_rpc_method_handler(
+                    servicer.getStaticModels,
                     request_deserializer=compservice__pb2.Empty.FromString,
-                    response_serializer=compservice__pb2.DatasetList.SerializeToString,
+                    response_serializer=compservice__pb2.ModelStaticList.SerializeToString,
             ),
             'inf_session': grpc.unary_stream_rpc_method_handler(
                     servicer.inf_session,
@@ -212,7 +212,7 @@ class compservice(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def updloadDataset(request_iterator,
+    def downloadStatic(request,
             target,
             options=(),
             channel_credentials=None,
@@ -222,14 +222,14 @@ class compservice(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.stream_unary(request_iterator, target, '/compservice/updloadDataset',
-            compservice__pb2.Dataset.SerializeToString,
+        return grpc.experimental.unary_unary(request, target, '/compservice/downloadStatic',
+            compservice__pb2.Model.SerializeToString,
             compservice__pb2.Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def deleteDataset(request,
+    def deleteStatic(request,
             target,
             options=(),
             channel_credentials=None,
@@ -239,14 +239,14 @@ class compservice(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/compservice/deleteDataset',
-            compservice__pb2.DatasetName.SerializeToString,
+        return grpc.experimental.unary_unary(request, target, '/compservice/deleteStatic',
+            compservice__pb2.Model.SerializeToString,
             compservice__pb2.Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def getDatasets(request,
+    def getStaticModels(request,
             target,
             options=(),
             channel_credentials=None,
@@ -256,9 +256,9 @@ class compservice(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/compservice/getDatasets',
+        return grpc.experimental.unary_unary(request, target, '/compservice/getStaticModels',
             compservice__pb2.Empty.SerializeToString,
-            compservice__pb2.DatasetList.FromString,
+            compservice__pb2.ModelStaticList.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

@@ -1,6 +1,5 @@
 import dash
 from dash.dependencies import ALL, MATCH, Input, Output, State
-from dash import dcc
 from dash import html
 import dash_daq as daq
 from dash import dash_table
@@ -11,6 +10,7 @@ import requests
 import json
 import io
 import base64
+import gc
 
 import pandas
 import numpy
@@ -20,10 +20,7 @@ from nltk import tokenize
 from app import app
 import callbacks_inf
 
-import google.protobuf as pb
-from google.protobuf.json_format import Parse
-from google.protobuf.json_format import MessageToDict
-import grpc
+from protobuf_to_dict import protobuf_to_dict
 from src.grpc_files import compservice_pb2, compservice_pb2_grpc
 import grpc_if_methods
 
@@ -84,7 +81,9 @@ def close_tab(clicks,selection):
     """
     if not clicks:
         raise dash.exceptions.PreventUpdate
-    tab_record.pop(selection, None)
+    _tab = tab_record.pop(selection, None)
+    del _tab
+    gc.collect()
     return []
 ######################
 #### MEMORY GAUGE ####
@@ -103,13 +102,13 @@ def draw_memory_gauge(clicks, children, data, value):
     accounting for model memory and batchsize, for every device in the returned list.
     """
     _dev_mem = {}
-
     for key in request_record.keys():
+        
         for device in request_record[key].devices:
-            _dev_mem[device] = _dev_mem.get(device,0) + data[request_record[key].model]['size'] + 0.01*value
+            _dev_mem[device] = _dev_mem.get(device,0) + data.get(request_record[key].model,{}).get('size',0) + 0.01*value
 
     _lsgauge = []
-    for dev in [i for i in request_server.getDevices()]:
+    for dev in request_server.getDevices():
         _lsgauge.append(daq.Gauge(
                                     color={"gradient":True,"ranges":{"green":[0,1.5*dev.memory_total//3]
                                                                     ,"yellow":[1.5*dev.memory_total//3,2.8*(dev.memory_total//3)]
@@ -185,7 +184,9 @@ def remove_from_request_list(n_clicks, id):
     """
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
-    del request_record[id['index']]
+
+    if id['index'] in request_record.keys(): #Guard for removing after running inference
+        del request_record[id['index']]
     return 0
 
 #######################
@@ -198,7 +199,7 @@ def remove_from_request_list(n_clicks, id):
 )
 def add_inf_tab(n_clicks):
     """
-    Takes the request_record list, makes a copy and clears the original. Initilises the 
+    Takes the request_record list, makes a copy and clears the original. Initialises the 
     tab and sends the inference request to the server, the proceeds to process the server
     output. Returns the list of keys mapping to tabs that hold the inference results.
     """
@@ -210,14 +211,17 @@ def add_inf_tab(n_clicks):
     rec_keys = list(_record.keys())
 
     print('Sending session request...')
-    response = [MessageToDict(message) for message in request_server.inf_session(_record
+    response = [protobuf_to_dict(message) for message in request_server.inf_session(_record
                                                                                 ,tab_record)]
     print('Preprocessing response...')
+
+    # REDO with enumerate
     for i in range(len(rec_keys)):
         response_embeddings = response[i]['embedding']
         _key = rec_keys[i]
         request_tab = tab_record[_key]
         request_tab.set_embeddings(response_embeddings)
+
         #children.append(request_tab.generate_tab())
     print('Sending to Tab.')
     return rec_keys
@@ -239,8 +243,6 @@ def update_layout(data, clicks, saved_clicks, children):
     
     _children.append(children[0])
     for key in _keys:
-        print(f'wtf{key}')
-        print(f'sin embargo {tab_record[key].index}')
         _children.append(tab_record[key].generate_tab())
     
     return _children
@@ -251,6 +253,15 @@ def update_layout(data, clicks, saved_clicks, children):
 )
 def inference_loading_state(value):
     return value
+
+@app.callback(
+    Output('run-inference-button', 'disabled'),
+    Input('run-inference-button', 'n_clicks')
+)
+def disable_run_inference_button(clicks):
+    if not clicks:
+        raise dash.exceptions.PreventUpdate
+    return 'disabled'
 #########################
 #### MODEL SELECTION ####
 #########################
@@ -270,7 +281,7 @@ def model_search(search_value, options):
     options = [{'label': i, 'value': i} for i in return_models]
     return options
 
-### DOWNLOAD ###
+### DOWNLOAD Transformer ###
 @app.callback(
     Output('download-model-button', 'disabled'),
     Input('model-dropdown', 'value')
@@ -295,7 +306,63 @@ def download_model(n_clicks, value):
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
     return request_server.downloadModel(value).completed
-    
+### DOWNLOAD Static ###
+@app.callback(
+    Output('download-static-model-button', 'disabled'),
+    Input('static-model-dropdown', 'value')
+)
+def activate_downloadStatic_button(value):
+    """
+    Activates the Download button upon selection of a Model from the repository
+    """
+    disabled = False
+    if not value:
+        disabled=True
+    return disabled
+@app.callback(
+    Output('download-static-model-button', 'value'),
+    Input('download-static-model-button', 'n_clicks'),
+    State('static-model-dropdown', 'value')
+)
+def download_model(n_clicks, value):
+    """
+    Control for the static download button
+    """
+    if not n_clicks:
+        raise dash.exceptions.PreventUpdate
+    return request_server.downloadStatic(value).completed 
+### STATIC DROPDOWN ###
+@app.callback(
+    Output('static-model-data-store', 'data'),
+    Input('download-static-model-button', 'value'),
+    Input('delete-static-model-button', 'value'),
+    Input('static-block-models', 'label')
+)
+def update_static_model_list_store(valuedown, valuedel, label):
+    """
+    Probes the server for the list of downloaded models.
+    """
+    return request_server.getStaticModels()
+
+@app.callback(
+    Output('static-block-models', 'options'),
+    Input('static-model-data-store','data'),
+    State('static-model-data-store', 'data')
+)
+def update_static_model_list(valuedown, data):
+    """
+    Controls the selector that displays the downloaded models.
+    """
+    if (not valuedown == False):
+        options = [{'label': i, 'value': i} for i in [str(i) for i in data]] 
+    return options
+@app.callback(
+    Output('static-block-models','value'),
+    Input('delete-static-model-button', 'n_clicks')
+)
+def clear_static_model_dropdown_selection(n_clicks):
+    return None
+
 ### DROPDOWN ###
 @app.callback(
     Output('model-data-store', 'data'),
@@ -332,10 +399,8 @@ def clear_model_dropdown_selection(n_clicks):
     Output('hf-link', 'href'),
     Input('block-models', 'value')
 )
-def link_to_model_page(value):
-    """
-    Generates and displays a link to the model page in HuggingFace repository.
-    """
+def link_to_model_page_href(value):
+ 
     if not value:
         raise dash.exceptions.PreventUpdate
     return f'http://huggingface.co/{value}'
@@ -345,8 +410,11 @@ def link_to_model_page(value):
     Input('block-models', 'value')
 )
 def link_to_model_page(value):
+    """
+    Generates and displays a link to the model page in HuggingFace repository.
+    """
     if not value:
-        raise dash.exceptions.PreventUpdate
+        return html.P()
     return html.P(f'http://huggingface.co/{value}')
 
 ### DELETE ###
@@ -376,7 +444,33 @@ def delete_model(n_clicks, value):
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
     return request_server.deleteModel(value).completed
-
+### DELETE STATIC ###
+@app.callback(
+    Output('delete-static-model-button', 'style'),
+    Input('static-block-models', 'value'),
+    State('delete-static-model-button', 'style')
+)
+def activate_static_delete_button(value, style):
+    """
+    Activates the delete button upon selection of a Model
+    """
+    if not value and not 'visibility' in style:
+        style['visibility']='hidden'
+    if value and 'visibility' in style:
+        style.pop('visibility')
+    return style
+@app.callback(
+    Output('delete-static-model-button', 'value'),
+    Input('delete-static-model-button', 'n_clicks'),
+    State('static-block-models', 'value')
+)
+def delete_model(n_clicks, value):
+    """
+    Controls the delete model button.
+    """
+    if not n_clicks:
+        raise dash.exceptions.PreventUpdate
+    return request_server.deleteStatic(value).completed
 ### LAYER SLIDER ###
 @app.callback(
     Output('layer-slider', 'disabled'),
@@ -431,7 +525,6 @@ def parse_file_ul(contents, filename):
     decoded = base64.b64decode(content_string)
 
     df = pandas.DataFrame({'A' : []})                                       # Fallback value
-    table_fragment = html.Div([ 'There was an error processing the file.']) # Fallback return
 
     try:
         if 'txt' in filename:
@@ -439,7 +532,7 @@ def parse_file_ul(contents, filename):
         if 'csv' in filename:
             df = pandas.read_csv(io.StringIO(decoded.decode('utf-8', errors='replace'))) #sep
         if 'json' in filename:
-            df = pandas.read_json(io.StringIO(decoded.decode('utf-8'))) #lines? ^ separator?
+            df = pandas.read_json(io.StringIO(decoded.decode('utf-8')), lines=True) #lines? ^ separator?
         if 'xls' in filename:
             df = pandas.read_excel(io.BytesIO(decoded))
 
@@ -463,7 +556,7 @@ def make_table(contents, df, filename):
             columns = [{'name':i, 'id':i, 'selectable':True} for i in df.columns],
             style_table={'overflowY': 'scroll'},
             style_cell={'textAlign':'left'},
-            column_selectable='single'
+            column_selectable='multi'
         ),
         html.Div('Raw Content'),
         html.Pre(contents[0:200] + '...', style={
@@ -486,12 +579,14 @@ def update_data_ul(list_of_contents, list_of_names):
         list_of_names(string): The name of the file
     
     """
-    children=[
-        html.P('There was an error processing the file. Make sure the size is under 1GB.')
-    ]
+   
     if not list_of_names:
-        raise dash.exceptions.PreventUpdate
+        return []
     
+    if not list_of_contents:
+        return [html.P('There was an error processing the file. Make sure the size is under 1GB.')]
+        
+    children = []  
     if (list_of_contents is not None) and not (len(list_of_contents)==0):
         print(list_of_names)
         print(type(list_of_contents))
@@ -508,7 +603,12 @@ def update_data_ul(list_of_contents, list_of_names):
 )
 def clear_content(value):
     return None
-
+@app.callback(
+    Output('file-ul-req', 'filename'),
+    Input('add-request', 'n_clicks')
+)
+def clear_names(value):
+    return None
 ###############################
 #### COMPOSITION SELECTION ####
 ###############################
@@ -534,7 +634,7 @@ def update_devices_list(options):
     Probes the server for the available computing devices.
     """
     options = [{'label': f"{dev.device_name} ID: {dev.id}", 
-                'value': dev.id} for dev in [i for i in request_server.getDevices()]]
+                'value': dev.id} for dev in request_server.getDevices()]
     return options
 
 
@@ -545,6 +645,7 @@ def update_devices_list(options):
     Output('add-request', 'value'),
     Input('add-request', 'n_clicks'),
     State('block-models', 'value'),
+    State('static-block-models', 'value'),
     State('layer-slider', 'value'),
     State('file-ul-req', 'filename'),
     State('file-ul-req', 'contents'),
@@ -552,10 +653,13 @@ def update_devices_list(options):
     State('batchsize-input', 'value'),
     State('block-composition', 'value'),
     State('select-devices', 'value'),
-    State('tab-count', 'data')
+    State('tab-count', 'data'),
+    State('model-type-tab', 'value')
+
 )
 def add_request(n_clicks
                 ,model
+                ,static_model
                 ,layers
                 ,filename
                 ,contents
@@ -563,19 +667,21 @@ def add_request(n_clicks
                 ,valuebatch
                 ,valuecomp
                 ,valuedev
-                ,tab_index):
+                ,tab_index
+                ,model_repr):
     """
     Collects all the information given by the user from the different page elements
     and initialises the request object, storing it in request_record.
     """
     if not n_clicks:
         raise dash.exceptions.PreventUpdate
-    if not (model and sel_columns and valuecomp and valuedev):
+    if not ((model or static_model) and sel_columns and valuecomp and valuedev):
         raise dash.exceptions.PreventUpdate
 
     _df =parse_file_ul(contents,filename)
+    
     _request = callbacks_inf.inference_tab(index=tab_index
-                                            ,model=model
+                                            ,model=model if 'transformer' in model_repr else static_model
                                             ,dataset=_df
                                             ,filename=filename
                                             ,text_column=sel_columns
@@ -599,14 +705,16 @@ def disable_add_request(value):
     Input('block-models', 'value'),
     Input('dataset-table', 'selected_columns'),
     Input('block-composition', 'value'),
-    Input('select-devices', 'value')
+    Input('select-devices', 'value'),
+    Input('static-block-models', 'value')
 )
 def activate_add_request(model
                         ,sel_columns
                         ,valuecomp
-                        ,valuedev):
+                        ,valuedev
+                        ,static_model):
     _state= False
-    if not (model and sel_columns and valuecomp and valuedev):
+    if not ((model or static_model) and sel_columns and valuecomp and valuedev):
         return True
     return _state
 
@@ -637,28 +745,49 @@ def load_saved(filename, contents, index):
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     
-
+    _saved_session = None
     try:
         if 'aspk' in filename:
             _saved_session = json.loads(decoded.decode('utf-8-sig'))
-            numpy.array(_saved_session['value'], dtype='float32')
+            for key in _saved_session.keys():
+                numpy.array(_saved_session[key]['value'], dtype='float32')
 
 
     except Exception as e:
         print(f'Issue converting file types: {e}')  
 
+    # RETOCAR: Añadir objeto en clase contenedora o pasar diccionario por parámetro
+    print(_saved_session.keys())
+    key_base = list(_saved_session.keys())[0]
+    print(index)
     saved_session = callbacks_inf.inference_tab(index=index
-                                            ,model=_saved_session['model']
-                                            ,dataset=pandas.DataFrame(_saved_session['sentences']
-                                                                    ,columns={*_saved_session['column']})
-                                            ,filename=_saved_session['filename']
-                                            ,text_column=_saved_session['column']
-                                            ,layer_low=_saved_session['layers'][0]
-                                            ,layer_up=_saved_session['layers'][1]
-                                            ,comp_func=_saved_session['composition']
-                                            ,embeddings=_saved_session['value']
+                                            ,model=_saved_session[key_base]['model']
+                                            ,dataset=pandas.DataFrame(_saved_session[key_base]['sentences']
+                                                                    ,columns={_saved_session[key_base]['column']})
+                                            ,filename=_saved_session[key_base]['filename']
+                                            ,text_column=[_saved_session[key_base]['column']]
+                                            ,layer_low=_saved_session[key_base]['layers'][0]
+                                            ,layer_up=_saved_session[key_base]['layers'][1]
+                                            ,comp_func=_saved_session[key_base]['composition']
+                                            ,embeddings=_saved_session[key_base]['value']
                                             ,batchsize=0
                                             ,devices=['cpu'])
+    
+    for key in list(_saved_session.keys())[1:]:
+        inf_data = callbacks_inf.Inference(index=index
+                                            ,model=_saved_session[key]['model']
+                                            ,dataset=pandas.DataFrame(_saved_session[key]['sentences']
+                                                                    ,columns={_saved_session[key]['column']})
+                                            ,filename=_saved_session[key]['filename']
+                                            ,text_column=_saved_session[key]['column']
+                                            ,layer_low=_saved_session[key]['layers'][0]
+                                            ,layer_up=_saved_session[key]['layers'][1]
+                                            ,comp_func=_saved_session[key]['composition']
+                                            ,embeddings=_saved_session[key]['value']
+                                            ,batchsize=0
+                                            ,devices=['cpu'])
+        saved_session.append(inf_data)
+
     tab_record[index] = saved_session
     return 1
 

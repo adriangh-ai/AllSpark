@@ -1,6 +1,5 @@
-from concurrent.futures.process import _ExceptionWithTraceback
 import multiprocessing as mp
-import concurrent.futures
+
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import gc
 
@@ -24,8 +23,10 @@ from composition.composition_func import Comp_factory """
 class Req_worker():
     """
     Worker, one for each model to run in parallel, on each GPU provided, for data paralellism 
+    Transformer models
     """
-    def __init__(self, modelname, layers, compfunc, partialdata, batchsize:int, single_dev, **kwargs):
+    def __init__(self,model_type, modelname, layers, compfunc, partialdata, batchsize:int, single_dev, **kwargs):
+        self.model_type = model_type
         self.modelname = modelname
         self.lower_layer = layers[0]
         self.upper_layer = layers[1]
@@ -113,13 +114,49 @@ class Req_worker():
         print(f"tiempoes {time2-time1}")
         return cat_embeddings
 
+class Req_worker_static():
+    """
+    Worker for static representation models.
+    """
+    def __init__(self,model_type, modelname, layers, compfunc, partialdata, batchsize:int, single_dev, **kwargs):
+        self.model_type = model_type
+        self.modelname = modelname
+        self.lower_layer = 0
+        self.upper_layer = 0
+        self.compfunc = compfunc
+        self.partialdata = partialdata
+        self.batchsize = batchsize
+        self.single_dev=single_dev
+    def worker_start(self):
+        time1 = time.time()
+        try:
+            model = Model_factory.get_model(self.modelname, self.single_dev)
+            composition = Comp_factory.get_compfun(self.compfunc)
+            time1 = time.time()
+            tokens = model.tokenize(self.partialdata['sentence'].to_list())
+            output =  model.inference(tokens)
+            output = composition.compose(output)
+
+            output = [ptensor.detach().numpy() for ptensor in output]
+            output = pd.DataFrame(output)
+            output = pd.concat([self.partialdata, output], axis = 1)
+
+        except Exception as e:
+            print(f'Encountered an error during processing. {e}')
+            raise
+
+        time2 = time.time()
+        print(f'tiempo es {time2-time1}')
+        return output
+
 class InferenceRequest():
     """
     Represents a request made on a single model. Splits the data according to devices and feeds
     them to the different worker threads it spawns (one per device). Collects the results.
     """
-    def __init__(self, model, layerLow, layerUp, compFunc, sentence, batchsize=16, devices = "cpu", **kwargs):
+    def __init__(self,model_type, model, layerLow, layerUp, compFunc, sentence, batchsize=16, devices = "cpu", **kwargs):
         self.id = 0
+        self.model_type = model_type
         self.devs = devices['name']
         self.modelname=model
         self.compfunc=compFunc
@@ -141,7 +178,15 @@ class InferenceRequest():
         return pd.concat(output, ignore_index=True)
 
     def worker_fn(self, args):
-        worker = Req_worker(**args)
+        """
+        Method to map inference to each partial dataset
+        """
+        #REDO without factory
+        worker = None
+        if 'transformer' in args['model_type']:
+            worker = Req_worker(**args)
+        else:
+            worker = Req_worker_static(**args)
         return worker.worker_start()
 
     def inference_run(self): 
@@ -152,11 +197,15 @@ class InferenceRequest():
         and the batch size to establish a lower portion limit and spawns (as opposed to fork()) one worker per 
         portion per GPU.
         """
+        if 'static' in self.model_type:
+            self.devs = ['cpu']
+
         jump = max(math.ceil(len(self.req_dataset)/len(self.devs)) , self.batchsize)
 
         parcial_inf = []
         for i in range(0,len(self.req_dataset),jump):
-            parcial_inf.append({'modelname':self.modelname
+            parcial_inf.append({'model_type': self.model_type
+                                ,'modelname':self.modelname
                                 ,'layers':self.layers
                                 ,'compfunc':self.compfunc
                                 ,'correction':self.correction
@@ -228,12 +277,13 @@ if __name__ == "__main__":
     xdataset = lines[:6000]
     dasta = pd.DataFrame({'sentence': ['This is a test of a test.', "I have a dog."]})
     dasta2 = pd.DataFrame([{'sentence': 'Testing this.', 'position':0},{'sentence': 'This.', 'position':1}])
-    dasta3 = pd.DataFrame(['This is a test of a test.', "I have a dog in a smoking"])
+    dasta3 = pd.DataFrame(['This is a test.', "Test.", "Testing this."])
     dasta3.columns = ['sentence']
-    ses = Session([{'model': '/home/tardis/Documents/uned/PFG/AllSpark/src/aspark_server/irequest/models/bert-base-uncased', 
+    ses = Session([{'model_type':'static',
+                    'model':'fasttext-wiki-news-subwords-300', 
                     'layerLow': 12, 
                     'layerUp': 12, 
-                    'compFunc': 'cls', 
+                    'compFunc': 'f_inf', 
                     'sentence': dasta3 , 
                     'batchsize': 16, 
                     'devices': {'name': ['cuda:1', 'cuda:2']}}])

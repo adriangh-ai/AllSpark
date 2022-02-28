@@ -18,11 +18,17 @@
     "@electron-forge/maker-rpm": "^6.0.0-beta.61",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.61",
     "@electron-forge/maker-zip": "^6.0.0-beta.61",
-    "electron": "^13.1.7"
+    "electron": "^13.1.7",
+    "is-reachable": "^5.1.0"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
     "is-reachable": "^5.1.0"
+  },
+  "build" : {
+    "extraResources": [
+      "src"
+    ]
   },
   "config": {
     "forge": {

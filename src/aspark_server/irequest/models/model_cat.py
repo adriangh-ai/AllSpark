@@ -1,4 +1,4 @@
-from .basemodel import Basemodel
+from .basemodel import Basemodel, Base_Staticmodel
 from pathlib import Path
 import json
 from abc import ABC, abstractmethod
@@ -8,6 +8,14 @@ class Model_factory(ABC):
     Factory class. Loads the config file an instantiates a model object based on model_type.
     """
     def get_model(modelname, devices):
+        static_rules = [        #Static Representation Models
+            'fasttext' in modelname,
+            'word2vec' in modelname,
+            'conceptnet' in modelname,
+            'glove' in modelname
+        ]
+        if any(static_rules):
+            return Static_model(modelname)  # RETURNS STATIC MODEL
         
         with open(Path(f'{modelname}/config.json'), 'r') as data_file:
                 data = json.load(data_file)
@@ -29,13 +37,12 @@ class Model_factory(ABC):
             'transfor-xl' in data
         ]
 
-        if any(encodeco_rules):
+        if any(encodeco_rules):             #RETURNS TRANSFORMER
             return EncoderDecoder(modelname, devices)
+        elif any(no_pad_rules):
+            return StandardNoPad(modelname, devices)
         else:
-            if any(no_pad_rules):
-                return StandardNoPad(modelname, devices)
-            else:
-                return StandardModel(modelname, devices)
+            return StandardModel(modelname, devices)
 
 class StandardModel(Basemodel):
     """
@@ -69,8 +76,18 @@ class EncoderDecoder(Basemodel):
     def __init__(self, modelname, devices):
         Basemodel.__init__(self,modelname,devices)
     def inference(self, tokens):
-        return self.model(input_ids=tokens['input_ids'], decoder_input_ids=tokens['input_ids'], output_hidden_states=True)
+        _output = self.model(input_ids=tokens['input_ids']
+                            ,decoder_input_ids=tokens['input_ids']
+                            ,output_hidden_states=True)
+        return _output
 
+class Static_model(Base_Staticmodel):
+    """
+    Class for the static representation models
+    """
+    def __init__(self, modelname):
+        Base_Staticmodel.__init__(self, modelname)
+    
 
 if __name__ == "__main__":
     model = Model_factory.get_model("bert-base-uncased", ["cpu"])

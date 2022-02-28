@@ -7,11 +7,11 @@ sys.path.append(str(Path(__file__).parents[2])) #Work Path
 import dash
 from dash import dcc
 from dash import html
-import dash_uploader as du
+#import dash_uploader as du
 
 from app import app
 
-du.configure_upload(app, f'{str(Path(__file__).parents[2])}/tmp')
+#du.configure_upload(app, f'{str(Path(__file__).parents[2])}/tmp')
 
 import callbacks_req
 import callbacks_inf
@@ -62,19 +62,22 @@ app.layout = html.Div(id='app-index',children=[
                                         "Choose Composition Method",
                                         dcc.RadioItems(id = "block-composition",
                                             options=[
-                                                {'label': 'CLS', 'value': 'cls'},
                                                 {'label': 'Sum', 'value': 'sum'},
                                                 {'label': 'Average', 'value': 'avg'},
+                                                {'label': 'CLS Token', 'value': 'cls'},
                                                 {'label': 'F Joint', 'value': 'f_joint'},
                                                 {'label': 'F Ind', 'value': 'f_ind'},
                                                 {'label': 'F Inf', 'value': 'f_inf'}
                                             ],
-                                            value='cls',
+                                            value='sum',
                                             labelStyle={'display':'block!important'}
                                         )
                             ])
                         ], style={'display':'inline-block', 'width':'20%'}),
                         html.Div(id = "block-model", className='tab-block', children=[
+                            #REINDENT
+                            dcc.Tabs(id='model-type-tab',className='main-tabs',value='transformer', children = [
+                                dcc.Tab(label= 'Transformer', value='transformer',className='main-tabs', children= [
                             html.H3('Model Selection', style={"text-align":"centered"}),
                             html.Div([ html.Label('HugginFace Model Repository'),
                                     html.Div([
@@ -88,7 +91,7 @@ app.layout = html.Div(id='app-index',children=[
                                                 children=["Download"],
                                                 disabled=True,
                                                 
-                                            ) ]) ,  ], style={"display": "inline-block","position":"relative"})
+                                            ) ]) ,  ], style={"display": "inline-block","position":"absolute"})
                                     ]),
                                     html.Div(children=[
                                         html.A(id='hf-link',href='', target='_blank',
@@ -118,7 +121,59 @@ app.layout = html.Div(id='app-index',children=[
                                             disabled=True
                                         )
                                     ])
-                            ])   
+                            ])]),
+                            dcc.Tab(label='Static Rep', value='static-rep', className='main-tabs', children = [
+                                 html.H3('Model Selection', style={"text-align":"centered"}),
+                            html.Div([ html.Label('Gensim Respository'),
+                                    html.Div([
+                                        dcc.Dropdown(id='static-model-dropdown', className="dropdown-menu", options=[
+                                            {'label': 'fasttext-wiki-news-subwords-300','value': 'fasttext-wiki-news-subwords-300'},
+                                            {'label':'conceptnet-numberbatch-17-06-300', 'value': 'conceptnet-numberbatch-17-06-300'},
+                                            {'label':'word2vec-ruscorpora-300', 'value': 'word2vec-ruscorpora-300'},
+                                            {'label':'word2vec-google-news-300', 'value': 'word2vec-google-news-300'},
+                                            {'label':'glove-wiki-gigaword-50', 'value': 'glove-wiki-gigaword-50'},
+                                            {'label':'glove-wiki-gigaword-100', 'value': 'glove-wiki-gigaword-100'},
+                                            {'label':'glove-wiki-gigaword-200', 'value': 'glove-wiki-gigaword-200'},
+                                            {'label':'glove-wiki-gigaword-300', 'value': 'glove-wiki-gigaword-300'},
+                                            {'label':'glove-twitter-25', 'value': 'glove-twitter-25'},
+                                            {'label':'glove-twitter-50', 'value': 'glove-twitter-50'},
+                                            {'label':'glove-twitter-100', 'value': 'glove-twitter-100'},
+                                            {'label':'glove-twitter-200', 'value': 'glove-twitter-200'}
+                                        ],
+                                            multi=False,
+                                            style={"min-width":"50%", "display":"inline-block"}
+                                        ),
+                                        html.Div( children= [
+                                            dcc.Loading(id = 'download-static-loading', children = [
+                                                html.Button(id='download-static-model-button',
+                                                    children=["Download"],
+                                                    disabled=True,) 
+                                            ])]
+                                            ,style={"display": "inline-block","position":"absolute"}
+                                        ),
+                                  
+                                    html.Div(children=[
+                                         html.A(href='https://github.com/RaRe-Technologies/gensim-data/#Models',
+                                            target='_blank',
+                                            children=[
+                                                html.P('Gensim Model Info')
+                                        ]),
+                                        html.P("Select Model"),
+                                        dcc.Store(id='static-model-data-store'),
+                                        dcc.RadioItems( id='static-block-models',
+                                            options=[],
+                                            labelStyle={'display':'block!important'}
+                                        ),
+                                        html.Button(id="delete-static-model-button",children=["Delete"],
+                                            style={"display": "inline-block","position":"relative",'visibility':'hidden'},
+                                        ),
+                                    ]),
+                                       
+                                    
+                            ]) 
+                            ]) 
+                            ])
+                            ])   #REINDENT
                             
                         ], style={'display':'inline-block', 'width':'60%'}),
                         html.Div(id = "block-device", className='tab-block', children=[
@@ -132,7 +187,8 @@ app.layout = html.Div(id='app-index',children=[
                                         )
                             ])
                         ], style={'display':'inline-block', 'width':'20%'}),
-                    ], style={'display':'flex'
+                    ], style={  'min-height':'400px'
+                                ,'display':'flex'
                                 ,'display':'-webkit-box'
                                 ,'display':'-webkit-flex'
                                 ,'-webkit-flex-diredtion':'row'
@@ -160,6 +216,7 @@ app.layout = html.Div(id='app-index',children=[
                         dcc.Loading( children = [
                         html.Div(id='display-ul-data', children=[
                             #dcc. add table para que no haya errores al inicio
+                            dash.dash_table.DataTable(id='dataset-table')
                         ])]),
                         html.Div(id='bacthsize-div', children=[
                             html.H5('Batchsize:'),
@@ -171,16 +228,7 @@ app.layout = html.Div(id='app-index',children=[
                         ])
                     ])
                 ]),
-                html.Div( children=[
-                    html.Button('Add Request', id="add-request"
-                                             , n_clicks=0
-                                             , disabled=True
-                                             , style={  'width' : '100%',
-                                                        'position':'fixed',
-                                                        'bottom':0,
-                                                        'margin-left':'-50%'})
-                    ],
-                    style={'text-align':'center'}),
+               
                 dcc.Loading(children = [
                 html.Div(id='saved-ses-sink', children = [
                     dcc.Loading( children=[
@@ -204,7 +252,17 @@ app.layout = html.Div(id='app-index',children=[
                             )
                         ])
                     ])
-                ])])
+                ])]),
+                 html.Div( children=[
+                    html.Button('Add Request', id="add-request"
+                                             , n_clicks=0
+                                             , disabled=True
+                                             , style={  'width' : '100%',
+                                                        'position':'fixed',
+                                                        'bottom':0,
+                                                        'margin-left':'-50%'})
+                    ],
+                    style={'text-align':'center'}),
             ]),
         ])
             
@@ -233,7 +291,7 @@ if __name__=='__main__':
     finally:
         sock.close()
 
-    print(wsgi_port)
+    print(f'Client internal port: {wsgi_port}')
     serve(app.server, host='localhost', port=wsgi_port)
     
     #TEST CASE

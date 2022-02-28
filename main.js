@@ -27,16 +27,19 @@ function createWindow() {
             contextIsolation: false
         }
     })
-        mainWindow.loadFile('./src/index.html');
+        mainWindow.loadFile(path.join(app.getAppPath(),  'src/index.html'));
         //mainWindow.webContents.openDevTools();
         //let contents = mainAddr.webContents;
         
         // Function to control the launch of server and client through EventListener
         ipcMain.on('form-submission', function (event, address) {
             var subpyserv;
-            
+            const python_path = path.join(require('os').homedir(),/*'..'*/ 'AllSpark_data/AllSpark_venv/bin/python3');
+            const server_path = path.join(app.getAppPath(), 'src/aspark_server/server_main.py');
+            const client_path = path.join(app.getAppPath(), 'src/aspark_client/client_main.py');
+
             if (address=='default') {
-                subpyserv = require('child_process').spawn('python3', ['./src/aspark_server/server_main.py']);
+                subpyserv = require('child_process').spawn( python_path,[server_path]);
                 subpyserv.stdout.on('data', (data) => {
                     console.log(`stdout: ${data}`);
                   });
@@ -49,9 +52,31 @@ function createWindow() {
                     console.log(`child process exited with code ${code}`);
                   });
 
-                subpy = require('child_process').spawn('python3', ['./src/aspark_client/client_main.py']);
+                subpy = require('child_process').spawn(python_path, [client_path]);
+                subpy.stdout.on('data', (data) => {
+                    console.log(`stdout: ${data}`);
+                  });
+                  
+                  subpy.stderr.on('data', (data) => {
+                    console.error(`stderr: ${data}`);
+                  });
+                  
+                  subpy.on('close', (code) => {
+                    console.log(`child process exited with code ${code}`);
+                  });
             } else {
-                subpy = require('child_process').spawn('python3', ['./src/aspark_client/client_main.py', String(address)]);
+                subpy = require('child_process').spawn(python_path, [client_path, String(address)]);
+                subpy.stdout.on('data', (data) => {
+                    console.log(`stdout: ${data}`);
+                  });
+                  
+                  subpy.stderr.on('data', (data) => {
+                    console.error(`stderr: ${data}`);
+                  });
+                  
+                  subpy.on('close', (code) => {
+                    console.log(`child process exited with code ${code}`);
+                  });
             }
             
             var client_up = false;

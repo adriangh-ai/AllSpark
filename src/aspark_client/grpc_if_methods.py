@@ -9,7 +9,7 @@ class Server_grpc_if():
         self.stub = compservice_pb2_grpc.compserviceStub(self.channel)
     def downloadModel(self, model):
         """
-        Sends the server a request to download the model given by "model"
+        Sends the server a request to download a HuggingFace model given by "model"
 
         Args:
             model(str): modelname
@@ -30,13 +30,47 @@ class Server_grpc_if():
         return self.stub.deleteModel(compservice_pb2.Model(modelname=model)) 
     def getModels(self):
         """
-        Sends a request to get the downloaded model ata from the server.
+        Sends a request to get the downloaded model from the server.
 
         Returns:
             Dictionary
         """
         _response = self.stub.getModels(compservice_pb2.Empty(empty=0)).model
         _response = {i.name : {'layers':i.layers, 'size':i.size} for i in _response}
+        return _response
+
+    def downloadStatic(self,model):
+        """
+        Sends the server a request to download a Gensim static model given by "model"
+
+        Args:
+            model(str): modelname
+        
+        Returns:
+            boolean
+        """
+        return self.stub.downloadStatic(compservice_pb2.Model(modelname=model)) 
+    
+    def deleteStatic(self, model):
+        """
+        Sends a deletion request to the server
+        
+        Args:
+            model(str): modelname
+        Rerturns:
+            boolean
+        """
+        return self.stub.deleteStatic(compservice_pb2.Model(modelname=model))
+    
+    def getStaticModels(self):
+        """
+        Sends a request to get the downloaded static models from the server.
+
+        Returns:
+            Dictionary
+        """
+        _response = self.stub.getStaticModels(compservice_pb2.Empty(empty=0)).model
+        _response = {i.name : {'name':i.name} for i in _response}
         return _response
 
     def inf_session(self, _record, tab_record):
@@ -54,6 +88,7 @@ class Server_grpc_if():
 
         for i in list(_record.keys()):
             tab_record[i] = _record.pop(i)                      # Take request from request record
+       
 
             request = compservice_pb2.Request()
             request.model = tab_record[i].model                 # Model to grpc message
@@ -62,12 +97,9 @@ class Server_grpc_if():
             request.comp_func = tab_record[i].comp_func         # Composition Function to grpc message
             request.batchsize = tab_record[i].batchsize         # Batchsize to grpc message
             request.devices.name.extend(tab_record[i].devices)  # Device list to grpc message
-
-            _column_index = tab_record[i].text_column
-            _dataset = tab_record[i].dataset[_column_index]
-            _dataset = _dataset[_column_index].squeeze().to_list()
-            request.sentence.extend(_dataset)                   # Dataset sentences to grpc message
             
+            _dataset = tab_record[i].get_sentence_list()
+            request.sentence.extend(_dataset)                   # Dataset sentences to grpc message
         
             _request_list.append(request)
         

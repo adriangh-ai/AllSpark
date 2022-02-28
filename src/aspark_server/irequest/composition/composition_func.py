@@ -64,6 +64,7 @@ class Avg(Compbase):
     """
     def __init__(self):
         super(Avg,self).__init__()
+
     def compose(self,output):
         """
         Calculates the average of the given vectors
@@ -132,7 +133,9 @@ class Fcomp(Compbase):
     
     def compose(self, output):
         #try parallelism
-        output = torch.stack([torch.stack([self._sentencefunc(layer) for layer in sentence]) for sentence in output])
+        output = torch.stack([
+                        torch.stack([self._sentencefunc(layer) for layer in sentence]) for sentence in output
+                        ])
         output = torch.mean(output,1)
         return output
 
@@ -150,7 +153,7 @@ class F_joint(Fcomp):
     Dataclass for Fjoint
     """
     def __init__(self):
-        Fcomp.__init__(self, alpha=1/4, beta=-1/2)
+        Fcomp.__init__(self, alpha=1, beta=1)
         pass
 
 class F_inf(Fcomp):

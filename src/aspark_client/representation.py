@@ -122,9 +122,12 @@ class dim_reduct():
                             margin=dict(
                             r=10, l=10,
                             b=10, t=10),
+                            uirevision=True
+                          
                             #modebar_orientation='v'
                         )
-        fig.update_layout(clickmode='event+select')
+        #fig.update_layout(clickmode='event+select')
+    
         return fig
         #fig.show()
 
@@ -177,22 +180,40 @@ if __name__=='__main__':
     TEST CASES
     """
     vectors = np.random.rand(500, 768)
-
+    vectorsb = np.random.rand(500, 768)
     a = [f'{i}' for i in range(500)]
-
+    b = [f'{i}' for i in range(500)]
     print(vectors)
     #vectors = np.array([range(100) for _ in list(range(100))])
     reductor = dim_reduct()
     resultado =  reductor.pca(vectors, 0,1,2)
+    resultadob =  reductor.pca(vectorsb, 0,1,2)
     import pandas as pd
 
     resultado = pd.DataFrame(resultado)
+    resultadob = pd.DataFrame(resultadob)
+
     a = pd.DataFrame(a)
+    b = pd.DataFrame(b)
+
     a.columns = ['sentences']
+    b.columns = ['sentences']
     #print(a)
     resultado['sentences'] = a
+    resultadob['sentences'] = b
+
     #resultado = reductor.tsne(vectors, 30, 250, 200)
     #resultado= reductor.umap(vectors, 15)
-    reductor.graph_run(resultado, a) 
+    scat1 = reductor.graph_run(resultado, a)
+    scat2 = reductor.graph_run(resultadob, b)
+    scat2.update_traces(marker=dict(size=3, line=dict(width=1, color='yellow')))
+    import plotly.graph_objects as go
+    scat1.add_traces(data=scat2.data)
+    scat1.add_traces(go.Scatter3d(x=[1,2,3], y = [1,2,3], z=[1,2,3], line=dict(color='blue')))
+    scat1.add_traces(go.Scatter3d(x=[1,-1], y = [1,-2,3], z=[1,-2], line=dict(color='blue')))
+    print(scat1.data)
+    print(scat1.data[0]['marker']['color'])
+    #scat1.show()
+    
    
    

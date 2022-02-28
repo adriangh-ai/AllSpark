@@ -18,6 +18,21 @@ class datawrapper():
             splittext = "ERROR: expected a list containing STR type. Were the correct tags selected?"
         return splittext
 
+    def word_split(text):
+        """
+        Splits the input into words using NLTK library
+        Args:
+            text : list - List with the text to process
+        Return:
+            Split text as a list
+        """
+        #implementMP TODO
+        try:
+            splittext = list(map(tokenize.word_tokenize, text))
+        except TypeError:
+            splittext = "ERROR: expected a list containing STR type. Were the correct tags selected?"
+        return splittext
+
     def clean_markup(txt):
         """
         Aux function to clean HTML from a text input
@@ -54,3 +69,8 @@ if __name__ == "__main__":
     ))))
     
 
+    print(datawrapper.word_split(list(map(datawrapper.clean_markup,
+    ["""<br>The AllSpark is an ancient and infinitely limitless, powerful Cybertronian artifact</br>. 
+    It has the power to bring lifeless technology to life by turning it into sentient, autonomous Cyberronians.
+    """]
+    ))))

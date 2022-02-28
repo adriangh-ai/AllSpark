@@ -1,5 +1,6 @@
 import torch
 import transformers as ts
+import gensim.downloader as api
 
 import sys ,os, random, shutil
 import threading
@@ -21,9 +22,13 @@ from google.protobuf.json_format import MessageToDict
 from irequest import devices, session
 
 
-WORKDIR = Path(__file__).parent             #Program base file tree
-MODEL_LIST_JSON = Path.joinpath(WORKDIR, f"irequest/models/stored_models.json") 
-
+WORKDIR = Path(__file__).parent                 #Program base file tree
+HOME = Path.home()                              #Home user folder
+MODEL_LIST_JSON = Path.joinpath(WORKDIR,        #Transformers stored
+                                f"irequest/models/stored_models.json") 
+MODEL_STATIC_LIST_JSON = Path.joinpath(WORKDIR, #Gensim stored
+                                f"irequest/models/stored_static_models.json")
+                                                                             
 ### SERVER INTERFACE
 
 class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
@@ -46,6 +51,7 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
                                     ,device_type = "cpu"))   #add cpu to the device list
         #Persistent Model list JSON storage
         self.model_list = self._get_models_from_file()       #Loads model list from file
+        self.model_static_list = self._get_static_models_from_file() 
         self._models_downloading = {}                        #Download temporary record
     
     def _get_models_from_file(self):
@@ -55,6 +61,17 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
         data = {}
         if MODEL_LIST_JSON.exists():
             with open(MODEL_LIST_JSON, 'r') as data_file:
+                data = json.load(data_file)
+
+        return data
+    
+    def _get_static_models_from_file(self):
+        """
+        Fetches the static model data stored from file
+        """
+        data = {}
+        if MODEL_STATIC_LIST_JSON.exists():
+            with open(MODEL_STATIC_LIST_JSON, 'r') as data_file:
                 data = json.load(data_file)
 
         return data
@@ -81,8 +98,9 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
             self._models_downloading[model]={'downloading':lock}
             
             #Local model cache
-            model_cache = Path.joinpath(WORKDIR, f"irequest/models/cache/{model}{random.randint(1000,9999)}")   
-            model_folder = Path.joinpath(WORKDIR, f"irequest/models/{model}")
+            model_cache = Path.joinpath(HOME, 
+                        f"AllSpark_data/models/cache/{model}{random.randint(1000,9999)}")   
+            model_folder = Path.joinpath(HOME, f"AllSpark_data/models/{model}")
             try: 
                 lock.acquire()
                 
@@ -113,6 +131,45 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
 
         return compservice_pb2.Response(completed=True)
 
+    def downloadStatic(self, request, context):
+        """
+        Downloader for the Gensim repository.
+        Args:
+            model : str - model name, according to Gensim's repository.
+        """
+
+        model = request.modelname
+        if model in self._models_downloading:                                  #GUARD
+            if 'downloading' in self._models_downloading[model]:
+                _lock = self._models_downloading[model]['downloading']
+                try:
+                    _lock.acquire()
+                finally:
+                    _lock.release()                       
+                    return compservice_pb2.Response(completed=True)
+        if not model in self.model_static_list: 
+            lock = threading.Lock()
+            self._models_downloading[model]={'downloading':lock}
+
+            try: 
+                lock.acquire()
+                model_path = api.load(model, return_path=True)
+                info = api.info()['models'][model]
+
+                self.model_static_list[model]= info
+                #lock?
+                with open(MODEL_STATIC_LIST_JSON, 'w+') as stored_models:
+                    json.dump(self.model_static_list, stored_models)
+
+            except FileExistsError as e:
+                print(f'Could not download {e}')
+            finally:
+                lock.release()
+                self._models_downloading.pop(model)
+
+        return compservice_pb2.Response(completed=True)
+
+    
     def deleteModel(self, request, context):
         """
         Deletes model given by modelname from the server storage.
@@ -132,14 +189,40 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
                 with open(MODEL_LIST_JSON, 'w+') as stored_models:
                     json.dump(self.model_list, stored_models)
         
-            shutil.rmtree(Path.joinpath(WORKDIR, f"irequest/models/{model}"))   #Remove model folder
+            shutil.rmtree(Path.joinpath(HOME, f"AllSpark_data/models/{model}"))   #Remove model folder
         except FileNotFoundError as e:
             print(e)
             print(f"Could not remove {model}: File not found.")
             return compservice_pb2.Response(completed=False)
         
         return compservice_pb2.Response(completed=True)
+    
+    def deleteStatic(self, request, context):
+        """
+        Deletes Gensim model given by modelname from the server storage.
+
+        Args:
+            request - compservice_pb2
+            context - given by grpc
         
+        Return:
+            compservice_pb2
+        """
+        model = request.modelname
+        try:
+            if model in self.model_static_list:
+                self.model_static_list.pop(model)
+                 #lock?
+                with open(MODEL_STATIC_LIST_JSON, 'w+') as stored_models:
+                    json.dump(self.model_static_list, stored_models)
+        
+            shutil.rmtree(Path.joinpath(HOME, f"gensim-data/{model}"))   #Remove model folder
+        except FileNotFoundError as e:
+            print(e)
+            print(f"Could not remove {model}: File not found.")
+            return compservice_pb2.Response(completed=False)
+        
+        return compservice_pb2.Response(completed=True)
         
     def getModels(self, request, context):
         """
@@ -154,6 +237,21 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
             _model_list.append(compservice_pb2.ModelStruct(name=modelcfg['_name_or_path'],
                                                         layers=modelcfg['num_hidden_layers'],
                                                         size = modelcfg['num_param']//100000000))
+        
+        models_response.model.extend(_model_list)
+        return models_response
+    
+    def getStaticModels(self, request, context):
+        """
+        Retrieves modelname and data of the stored static models
+
+        Return:
+            models_response - compservice_pb2
+        """
+        models_response = compservice_pb2.ModelStaticList()
+        _model_list = []
+        for staticname in self.model_static_list.keys():
+            _model_list.append(compservice_pb2.ModelStaticStruct(name=staticname))
         
         models_response.model.extend(_model_list)
         return models_response
@@ -177,11 +275,17 @@ class CompServiceServicer(compservice_pb2_grpc.compserviceServicer):
             request['sentence'] = pd.DataFrame(request['sentence'])
             request['sentence'].columns = ['sentence']
             print(request['model'])
-            request['model'] = str(Path.joinpath(WORKDIR, f"irequest/models/{request['model']}"))
+            if request['model'] in self.model_list:
+                request['model'] = str(Path.joinpath(HOME
+                                                    ,f"AllSpark_data/models/{request['model']}"))
+                request['model_type'] = 'transformer'
+            elif request['model'] in self.model_static_list:
+                request['model_type'] = 'static'
         
-       
+        print('Launching inference process...')
         session_instance = session.Session(sessionData)
-        ses_return = session_instance.session_run()
+        ses_return = session_instance.session_run()     # Start inference
+
         print('Preprocessing...')
         for r_embeds in ses_return:
             r_embeds= r_embeds.drop(columns='sentence')
@@ -251,25 +355,28 @@ def serve():
 
 
 if __name__ == '__main__':
+    # INIT
+    serve()
+
+
+    ### TEST ###
     """ dasta3 = pd.DataFrame(['Testing this.', "This."])
     dasta3.columns = ['sentence']
-    ses = session.Session([{'model': '/home/tardis/Documents/uned/PFG/AllSpark/src/aspark_server/irequest/models/gpt2', 'layerLow': 12, 'layerUp': 12, 'compFunc': 'cls', 'sentence': dasta3 , 'batchsize': 1, 'devices': {'name': ['cuda:1', 'cuda:2']}}])
+    ses = session.Session([{'model_type':'static',
+                            'model':'fasttext-wiki-news-subwords-300', 
+                            'layerLow': 12, 
+                            'layerUp': 12, 
+                            'compFunc': 'sum', 
+                            'sentence': dasta3 , 
+                            'batchsize': 1, 
+                            'devices': {'name': ['cuda:1', 'cuda:2']}}])
     ses_return = ses.session_run() 
 
 
 
     print(ses_return)   """
-    
-    serve()
+    ###
+
+
        
-
-#Composition ops
-
-#Anisotropy
-
-#Saved models
-
-#Saved datasets
-
-#Password settings
 

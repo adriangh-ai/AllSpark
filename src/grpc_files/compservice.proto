@@ -6,6 +6,10 @@ service compservice {
     rpc deleteModel(Model) returns (Response) {}
     rpc getModels(Empty) returns (ModelList) {}
 
+    rpc downloadStatic(Model) returns (Response) {}
+    rpc deleteStatic(Model) returns (Response) {}
+    rpc getStaticModels(Empty) returns (ModelStaticList) {}
+    
     rpc inf_session(Session) returns  (stream EmbeddingDataSet) {}
 
     rpc getDevices(Empty) returns (DeviceList) {}
@@ -22,10 +26,17 @@ message Model {
 message ModelList {
     repeated ModelStruct model = 1;
 }
+message ModelStaticList {
+    repeated ModelStaticStruct model =1;
+}
+
 message ModelStruct {
     string name = 1;
     int32 layers =2;
     int32 size = 3;
+}
+message ModelStaticStruct {
+    string name = 1;
 }
 
 message EmbeddingDataSet {

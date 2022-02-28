@@ -41,6 +41,10 @@ function sendForm() {
 document.getElementById("deploy-local").addEventListener("click", localDeploy)
 
 function localDeploy() {
+    document.getElementById("deploy-local").disabled = true;
+
     let localaddress = 'default';
     ipcRenderer.send("form-submission", localaddress)
+    sleep(10000)
+    //document.getElementById("deploy-local").disabled = false;
 }
