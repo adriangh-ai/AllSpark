@@ -359,23 +359,6 @@ if __name__ == '__main__':
     serve()
 
 
-    ### TEST ###
-    """ dasta3 = pd.DataFrame(['Testing this.', "This."])
-    dasta3.columns = ['sentence']
-    ses = session.Session([{'model_type':'static',
-                            'model':'fasttext-wiki-news-subwords-300', 
-                            'layerLow': 12, 
-                            'layerUp': 12, 
-                            'compFunc': 'sum', 
-                            'sentence': dasta3 , 
-                            'batchsize': 1, 
-                            'devices': {'name': ['cuda:1', 'cuda:2']}}])
-    ses_return = ses.session_run() 
-
-
-
-    print(ses_return)   """
-    ###
 
 
        

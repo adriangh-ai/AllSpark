@@ -55,7 +55,6 @@ class datawrapper():
         s = Clean_markup()
         s.feed(txt)
         return s.get_data()
-    #Batchin TODO ?If you're just interested in the results, you're better off using one of multiprocessing.Pool's map functions.
 
 if __name__ == "__main__":
     """
