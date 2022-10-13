@@ -21,7 +21,7 @@ function createWindow() {
 
     var mainAddr = 'http://localhost:42000';
     var openWindow = function() {
-        mainWindow = new BrowserWindow({ width: 1024, height: 1024,
+        mainWindow = new BrowserWindow({ width: 1920, height: 1080,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
