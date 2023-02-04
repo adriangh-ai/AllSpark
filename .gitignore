@@ -24898,3 +24898,5 @@ node_modules/slice-ansi/index.js
 node_modules/slice-ansi/license
 node_modules/slice-ansi/package.json
 node_modules/slice-ansi/readme.md
+.devcontainer
+node_modules
