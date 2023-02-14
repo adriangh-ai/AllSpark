@@ -211,8 +211,8 @@ def add_inf_tab(n_clicks):
     rec_keys = list(_record.keys())
 
     print('Sending session request...')
-    response = [protobuf_to_dict(message) for message in request_server.inf_session(_record
-                                                                                ,tab_record)]
+    response = [protobuf_to_dict(message) 
+                for message in request_server.inf_session(_record ,tab_record)]
     print('Preprocessing response...')
 
     # REDO with enumerate

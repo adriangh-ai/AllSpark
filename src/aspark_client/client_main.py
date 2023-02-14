@@ -292,7 +292,7 @@ if __name__=='__main__':
         sock.close()
 
     print(f'Client internal port: {wsgi_port}')
-    serve(app.server, host='localhost', port=wsgi_port)
+    serve(app.server, host='127.0.0.1', port=wsgi_port)
     
     #TEST CASE
     """    import grpc_if_methods as g
