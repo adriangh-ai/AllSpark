@@ -4,8 +4,6 @@ from pathlib import Path
 from datetime import datetime
 import os
 
-import numpy as np
-
 from dash.dependencies import ALL, Input, MATCH, Output, State
 import dash
 from dash import dcc
@@ -13,8 +11,12 @@ from dash import html
 from dash import dash_table
 
 import pandas
+import numpy as np
+
 import plotly.express as px
-from torch import layout
+import plotly.graph_objects as go
+
+import torch
 
 from app import app
 
@@ -55,7 +57,8 @@ class Inference():
                     ,comp_func
                     ,batchsize
                     ,devices
-                    ,embeddings = []):
+                    ,embeddings = []
+                    ):
 
             self.index=index
             self.model=model
@@ -131,11 +134,12 @@ class inference_tab():
                 ,comp_func
                 ,batchsize
                 ,devices
-                ,embeddings = []):
+                ,embeddings = []
+                ,labels= None
+                ):
 
         self.index=index
         self.model=model
-        #self.dataset = dataset
         self.filename= filename
         self.text_column=text_column
         self.layer_low = layer_low
@@ -143,7 +147,7 @@ class inference_tab():
         self.comp_func = comp_func
         self.batchsize = batchsize
         self.devices = devices
-        #self.embeddings = embeddings
+        self.labels = labels
         
         self.dimred_funct = dim_reduct()
         self.simil = sent_simil()
@@ -159,6 +163,11 @@ class inference_tab():
                                         ,batchsize
                                         ,devices
                                         ,embeddings) for column in text_column]
+        
+        self.labels = dataset['label'].to_numpy() if 'label' in dataset.columns else None
+        self.labels_norm = None
+        self.similarity_norm = None
+        self.similarity_pairs = None
         
         self.colors=['blue','red','green', 'yellow', 'white'] 
     
@@ -209,8 +218,21 @@ class inference_tab():
         for i in self.inference_list:
             _sentence_list.extend(i.get_sentence_data())
         return _sentence_list
+   
+    def _normalize(self, x):
+            from sklearn.preprocessing import MinMaxScaler
+            _minmax = MinMaxScaler(feature_range=(0,1), copy=True, clip=False)
+            return _minmax.fit(x)
+        
+    def _divergency(self, index):
+        simil = float(self.similarity_norm.transform(self.similarity_pairs[index].numpy().reshape(1,-1))[0][0])
+        if self.labels[index]==-1:
+            label = 1
+        else:
+            label = float(self.labels_norm.transform(self.labels[index].reshape(1,-1))[0][0])
+        return 1 - abs(simil-label)
     
-    def generate_fig(self, tab_val, params):
+    def generate_fig(self, tab_val, params, draw_links=False):
         """
         Generates the Plotly figure object with the selected dimensionality reduction
         method.
@@ -221,7 +243,7 @@ class inference_tab():
             Return:
                 Plotly figure object
         """
-
+            
         points = np.concatenate([i.embeddings for i in self.inference_list])
 
         if tab_val == 'pca-tab':
@@ -233,11 +255,8 @@ class inference_tab():
 
         # Wrapper Plotly Figure
         fig = px.scatter_3d(template='plotly_dark')
-        
-        fig.update_traces(marker=dict(size=3, line=dict(width=1, color='DarkSlateGrey')))
-        
+        fig.update_traces(marker=dict(size=5, line=dict(width=1, color='DarkSlateGrey')))
         fig.update_traces(hoverinfo="text",selector=dict(type='scatter3d'))
-
         fig.update_layout(scene = dict(
                             xaxis = dict(
                                 backgroundcolor="rgb(200, 200, 230)",
@@ -255,12 +274,8 @@ class inference_tab():
                                 showbackground=False,
                                 zerolinecolor="white", zerolinewidth=5),),
                             margin=dict(
-                            r=10, l=10,
-                            b=10, t=10),
-                            #modebar_orientation='v'
-                        )
-        #fig.update_layout(clickmode='event+select')
-
+                                r=10, l=10,
+                                b=10, t=10),)
         fig.update_layout(legend=dict(
                             x=0,
                             y=0.5,
@@ -270,33 +285,62 @@ class inference_tab():
                             font=dict(
                                 family="Courier",
                                 size=12,
-                                color="gray"
-                            ),
+                                color="gray"),
                             bordercolor="gray",
-                            borderwidth=2
-                        )
-        )
-
+                            borderwidth=2))
+        
        # Recolor diferent traces and add them into the wrapper
         indx = 0
+        graph_list=[]
         for idx, elem in enumerate(self.inference_list):
-                _elem_trace = self.dimred_funct.graph_run(
-                                                points[indx:(indx+len(elem.adyacency))]
-                                                ,elem.adyacency.keys()
-                )
+                _elem_trace = self.dimred_funct.graph_run(points[indx:(indx+len(elem.adyacency))],
+                                                          elem.adyacency.keys())
                 
-                _elem_trace.update_traces(
-                                            showlegend=True
-                                            ,name=elem.text_column
-                                            ,marker=dict(color=self.colors[len(self.colors)%(idx+1)])
-                )
+                if self.labels is not None:
+                    graph_list.append(_elem_trace)
+                    
+                _elem_trace.update_traces(showlegend=True,
+                                          name=elem.text_column,
+                                          marker=dict(color=self.colors[len(self.colors)%(idx+1)]))
 
                 fig.add_traces(data=_elem_trace.data)
                 indx+=len(elem.adyacency)
-        import plotly.graph_objects as go
-    #figure['data'].append(go.Scatter3d(x=[1,2,3], y = [1,2,3], z=[1,2,3], line=dict(color='yellow')))
-        fig.add_traces(go.Scatter3d(line=dict(color='yellow')))
-        fig.update_layout(uirevision=True)
+        
+        if len(self.inference_list)==2 and self.labels is not None:
+            if self.similarity_pairs is None:
+                cos_sim = [torch.from_numpy(i.embeddings) for i in self.inference_list]
+                self.similarity_pairs = torch.nn.functional.cosine_similarity(cos_sim[0], cos_sim[1])
+            if self.labels_norm is None:
+                self.labels_norm = self._normalize(torch.from_numpy(self.labels).unsqueeze(1))
+            if self.similarity_norm is None:
+                self.similarity_norm = self._normalize(self.similarity_pairs.unsqueeze(1))
+            if draw_links:    
+                embedding_group = len(points)//2
+                lines = []
+                if self.labels is not None:
+                    for i in range(embedding_group):
+                        lines.append({
+                                        'x':[points[i,0], points[i+embedding_group,0]],
+                                        'y':[points[i,1], points[i+embedding_group,1]],
+                                        'z':[points[i,2], points[i+embedding_group,2]],
+                        })
+                    colorscale = [[0, 'rgb(255, 0, 0)'], [1, 'rgb(0, 255, 0)']]   
+                    fig.add_traces(data = [go.Scatter3d(x = line['x'], 
+                                                    y = line['y'], 
+                                                    z = line['z'], 
+                                                    mode = 'lines',
+                                                    name = f'Similarity: {round(float(self.similarity_pairs[i]),2)}\n' +
+                                                        f'Label: {self.labels[i]} \n' +
+                                                        f'Agreement: {str(round(float(self._divergency(i)),2))}',
+                                                    line = dict(color = [self._divergency(i), self._divergency(i)],
+                                                                colorscale=colorscale,
+                                                                cmin=0,
+                                                                cmax=1,
+                                                                width=1), 
+                                                    showlegend=False,
+                                                    hoverlabel = dict(namelength = 50)) for i,line in enumerate(lines)])
+                    
+                    fig.update_layout(uirevision=True)
         return fig
 
     def generate_tab(self):
@@ -421,13 +465,25 @@ class inference_tab():
                                     html.Div( children =[
                                         html.P("B Selector"),
                                         dcc.Slider(id={'type':'b-slider', 'index': self.index },
-                                            value = 1,
+                                            value = 2,
                                             min=1,
                                             max=2,
                                             step=0.1,
                                             marks = {i:f'{round(i,2)}' for i in np.arange(1,2,0.1)}
                                         )
                                         ]),
+                                    html.Div([
+                                        dcc.Checklist(id ={ 'type':'sentence-table-checkbox', 'index': self.index },
+                                                    options=[
+                                                    {'label': 'Show sentence table', 'value': 'show_table'},
+                                                ],
+                                                value=[]),   
+                                        dcc.Checklist(id ={ 'type':'sentence-pair-checkbox', 'index': self.index },
+                                                    options=[
+                                                    {'label': 'Draw sentence links', 'value': 'draw_links', 'disabled':False},
+                                                ],
+                                                value=[]),              
+                                    ]),
 
                                     html.Button('Save Session', id= {'type':'save-session'
                                                                     ,'index': self.index },
@@ -446,8 +502,8 @@ class inference_tab():
                                     'fillFrame':True,
                                     'modeBarButtons':'hover',
                                     'displayModeBar':True,
-                                    'responsive': True
-
+                                    'responsive': True,
+                                    'renderer': 'webgl'
                                 }
                                 )],
                         style={'display':'inline-block'}) ]),
@@ -463,14 +519,32 @@ class inference_tab():
                                         id = {'type':'simil-table', 'index': self.index },
                                         data = [],
                                         columns = [{'name':'Sentence Similarity', 'id':'Sentence Similarity'}], 
-                                        style_table={'overflowY': 'scroll'},
+                                        style_table={'overflowY': 'scroll', 'overflowX':'scroll'},
                                         style_cell={'textAlign':'left'},
                                         column_selectable='single'
                                     ),
                             ],
                             style={'position':'fixed',
                                     'bottom':0,
-                                    'width': '100%'}
+                                    'width': '100%',
+                                    'max-height':'30%',
+                                    'overflow':'scroll'}
+                        ),
+                        html.Div(id = {'type':'pairs-table-div', 'index': self.index }, children=[
+                                    dash_table.DataTable(
+                                        id = {'type':'pairs-table', 'index': self.index },
+                                        data = [],
+                                        columns = [{'name':'Agreement Table', 'id':'Agreement Table'}], 
+                                        style_table={'overflowY': 'scroll', 'overflowX':'scroll'},
+                                        style_cell={'textAlign':'left'},
+                                        column_selectable='single'
+                                    ),
+                            ],
+                            style={'position':'fixed',
+                                    'bottom':0,
+                                    'width': '100%',
+                                    'max-height':'30%',
+                                    'overflow':'scroll'}
                         )
             ])
         return new_tab
@@ -485,6 +559,7 @@ class inference_tab():
     Output({'type':'loading-graph', 'index': MATCH}, 'children'),
     Input({'type':'replot-button', 'index':MATCH}, 'n_clicks'),
     Input({'type':'dim-red-tabs', 'index': MATCH}, 'value'),
+    Input({'type':'sentence-pair-checkbox','index': MATCH}, 'value'),
     State({'type':'pca-dim1-dd', 'index': MATCH}, 'value'),
     State({'type':'pca-dim2-dd', 'index': MATCH}, 'value'),
     State({'type':'pca-dim3-dd', 'index': MATCH}, 'value'),
@@ -494,7 +569,7 @@ class inference_tab():
     State({'type':'umap-neighb-slider', 'index': MATCH}, 'value'),
     State({'type':'plot-graph', 'index':MATCH}, 'id')
 )
-def figure_update(n_clicks, tab_val, pca1, pca2, pca3, tsneper, tsnelearn, tsneiter, uneigh, id):
+def figure_update(n_clicks, tab_val, draw_links, pca1, pca2, pca3, tsneper, tsnelearn, tsneiter, uneigh, id):
     """
     Plots the graph, with the dimensionality reduction chosen by the tab selection, using the page
     information given by the user with the chosen parameters.
@@ -510,7 +585,7 @@ def figure_update(n_clicks, tab_val, pca1, pca2, pca3, tsneper, tsnelearn, tsnei
     
     params = []
     if tab_val == 'pca-tab':
-        params = [pca1, pca2, pca3]
+        params = [pca1-1, pca2-1, pca3-1]
     elif tab_val == 'tsne-tab':
         params = [tsneper, tsneiter, tsnelearn]
     elif tab_val == 'umap-tab':
@@ -519,44 +594,17 @@ def figure_update(n_clicks, tab_val, pca1, pca2, pca3, tsneper, tsnelearn, tsnei
     return [dcc.Graph(id={'type':'plot-graph', 'index': inf_tab.index },
                                 style={'height':'100%'},
                                 responsive=True,
-                                figure=inf_tab.generate_fig(tab_val, params),
+                                figure=inf_tab.generate_fig(tab_val, params, draw_links),
                                 config= {
                                     'autosizable':True,
                                     'displaylogo':False,
                                     'fillFrame':True,
                                     'modeBarButtons':'hover',
                                     'displayModeBar':True,
-                                    'responsive': True
-
+                                    'responsive': True,
+                                    'renderer':'webgl'
                                 }
                                 )]
-########################
-#### Draw relations ####
-########################
-""" @app.callback(
-    Output({'type':'plot-graph', 'index':MATCH}, 'figure'),
-    Input({'type':'plot-graph', 'index':MATCH}, 'clickData'),
-    State({'type':'plot-graph', 'index':MATCH}, 'figure'),
-    State({'type':'plot-graph', 'index':MATCH}, 'id')
-)
-def draw_point_relations(clickdata, figure, id):
-    indx = id['index']
-    inf_tab = tab_record.get(indx, [])
-    
-    if not inf_tab:
-        return []
-    
-    if not inf_tab or not figure or not clickdata: 
-        raise dash.exceptions.PreventUpdate
-    
-    #Delete previous traces
-    figure['data'] = figure['data'][:len(inf_tab[:])]
-    #Draw new trace
-    import plotly.graph_objects as go
-    figure['data'].append(go.Scatter3d(x=[1,2,3], y = [1,2,3], z=[1,2,3], line=dict(color='yellow')))
-    print(figure.get('layout','nope!'))
- 
-    return figure """
 ###################
 #### Similarity####
 ###################
@@ -588,10 +636,10 @@ def similarity_table(clickdata,valuesim, valueb ,selected,id,fig):
         return []
     
     sorted_sentences = pandas.DataFrame({'A' : []})
-    if clickdata:
+    if clickdata and clickdata['points'][0].get('customdata', 0):
         print(clickdata)
         # Isolate point and trace from figure
-        points = inf_tab[ clickdata['points'][0]['curveNumber'] ].embeddings
+        points = inf_tab[ clickdata['points'][0]['curveNumber']-1 ].embeddings
         vector1 = points[ clickdata['points'][0]['pointNumber'] ]
         points = np.concatenate([i.embeddings for i in inf_tab[:]])
 
@@ -605,20 +653,20 @@ def similarity_table(clickdata,valuesim, valueb ,selected,id,fig):
             simil_array = inf_tab.simil.icmb(vector1, points, valueb)
         
         # Sorting and formatting
-        simil_array = inf_tab.simil.sorted_simil(simil_array,simil_method)[:10]
+        simil_array = inf_tab.simil.sorted_simil(simil_array,simil_method)
         _sentences = inf_tab.get_sentence_data_list()
        
         _dataframe_list = [_sentences[s_idx] for s_idx in simil_array]
-        sorted_sentences = pandas.DataFrame(_dataframe_list , columns={'Sentence Similarity','Dataset'})
+        sorted_sentences = pandas.DataFrame(_dataframe_list , columns=['Sentence Similarity','Dataset'])
         sorted_sentences = sorted_sentences[['Sentence Similarity', 'Dataset']]
     # Dash repr
-    sorted_sentences = sorted_sentences.head(10).to_dict('records') if not sorted_sentences.empty else []
+    sorted_sentences = sorted_sentences.to_dict('records') if not sorted_sentences.empty else []
     _children = [dash_table.DataTable(
                     id = {'type':'simil-table', 'index': indx },
                     data = sorted_sentences,
                     columns = [{'name':"Dataset", 'id':'Dataset'},
                                 {'name':"Sentence Similarity", 'id':'Sentence Similarity'}], 
-                    style_table={'overflowY': 'scroll'},
+                    #style_table={'overflowY': 'scroll'},
                     style_cell={'textAlign':'left'},
                     column_selectable='single',
                     style_data_conditional= [{
@@ -630,6 +678,48 @@ def similarity_table(clickdata,valuesim, valueb ,selected,id,fig):
                 )]
     return _children
 
+@app.callback(
+    Output({'type':'pairs-table-div','index': MATCH}, 'children'),
+    Input({'type':'sentence-table-checkbox','index': MATCH}, 'value'),
+    State({'type':'sentence-table-checkbox','index': MATCH}, 'id')
+)
+def pairs_table_update(value, id):
+    indx = id['index']
+    inf_tab = tab_record.get(indx, [])
+    
+    if not inf_tab:
+        return []
+    
+    if not value:
+        return []
+    
+    if not inf_tab:
+        raise dash.exceptions.PreventUpdate
+    
+    df = pandas.DataFrame()
+    for data in inf_tab.inference_list:
+        df[data.dataset.columns] = data.dataset
+
+    if inf_tab.labels is not None and inf_tab.similarity_pairs is not None:
+        df['Labels'] = inf_tab.labels
+        df['Similarity value'] = inf_tab.similarity_pairs
+        df['Agreement'] = [inf_tab._divergency(i) for i in range(len(inf_tab.similarity_pairs))]
+
+    _children = [dash_table.DataTable(
+                    id = {'type':'pairs-table', 'index': indx },
+                    data = df.to_dict('records'),
+                    columns = [{'name':column, 'id':column} for column in df.columns], 
+                    #style_table={'overflowY': 'scroll', 'overflowX' : 'scroll'},
+                    style_cell={'textAlign':'left'},
+                    column_selectable='single',
+                    style_data_conditional= [{
+                        'if' : {
+                            'row_index' : 0
+                        },              
+                        'color':'#636efa'
+                    }]
+                )]
+    return _children
 
 ######################
 #### SAVE TO FILE ####

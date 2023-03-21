@@ -1,26 +1,26 @@
-import torch
-import transformers as ts
-import gensim.downloader as api
-
-import sys ,os, random, shutil
+import gc  # gargabe collector
+import json
+import os
+import random
+import shutil
+import signal
+import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
-import gc #gargabe collector
-
-import signal
-
-import pandas as pd
-import json
-
 from pathlib import Path
+
+import gensim.downloader as api
+import pandas as pd
+import torch
+import transformers as ts
+
 sys.path.append(str(Path(__file__).parents[2]))
 
 import grpc
-from src.grpc_files import compservice_pb2_grpc, compservice_pb2
 from google.protobuf.json_format import MessageToDict
-
 from irequest import devices, session
 
+from src.grpc_files import compservice_pb2, compservice_pb2_grpc
 
 WORKDIR = Path(__file__).parent                 #Program base file tree
 HOME = Path.home()                              #Home user folder
