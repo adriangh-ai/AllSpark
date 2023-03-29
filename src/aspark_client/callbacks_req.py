@@ -532,7 +532,7 @@ def parse_file_ul(contents, filename):
         if 'csv' in filename:
             df = pandas.read_csv(io.StringIO(decoded.decode('utf-8', errors='replace'))) #sep
         if 'json' in filename:
-            df = pandas.read_json(io.StringIO(decoded.decode('utf-8')), lines=True) #lines? ^ separator?
+            df = pandas.read_json(io.StringIO(decoded.decode('utf-8')), lines=True) 
         if 'xls' in filename:
             df = pandas.read_excel(io.BytesIO(decoded))
 
@@ -546,6 +546,7 @@ def make_table(contents, df, filename):
     """
     if  df.empty:
         return html.Div([ 'There was an error processing the file.'])
+
     if  not df.empty:
         table_fragment =html.Div([
         html.H4('Select the column with the sentences to process:'),
@@ -678,7 +679,7 @@ def add_request(n_clicks
     if not ((model or static_model) and sel_columns and valuecomp and valuedev):
         raise dash.exceptions.PreventUpdate
 
-    _df =parse_file_ul(contents,filename)
+    _df = parse_file_ul(contents,filename)
     
     _request = callbacks_inf.inference_tab(index=tab_index
                                             ,model=model if 'transformer' in model_repr else static_model

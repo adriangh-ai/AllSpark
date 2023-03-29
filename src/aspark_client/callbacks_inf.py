@@ -1,26 +1,25 @@
-from collections import OrderedDict, defaultdict
+import os
 import json
+from collections import OrderedDict, defaultdict
 from pathlib import Path
 from datetime import datetime
-import os
 
-from dash.dependencies import ALL, Input, MATCH, Output, State
 import dash
 from dash import dcc
 from dash import html
 from dash import dash_table
+from dash.dependencies import ALL, Input, MATCH, Output, State
 
 import pandas
 import numpy as np
-
 import plotly.express as px
 import plotly.graph_objects as go
-
 import torch
 
 from app import app
 
 from representation import dim_reduct, sent_simil
+from sklearn.preprocessing import MinMaxScaler
 
 WORKDIR = Path(__file__).parent     # Program base file tree
 HOME = Path.home()
@@ -168,6 +167,7 @@ class inference_tab():
         self.labels_norm = None
         self.similarity_norm = None
         self.similarity_pairs = None
+        self.manhattan_average = None
         
         self.colors=['blue','red','green', 'yellow', 'white'] 
     
@@ -220,7 +220,6 @@ class inference_tab():
         return _sentence_list
    
     def _normalize(self, x):
-            from sklearn.preprocessing import MinMaxScaler
             _minmax = MinMaxScaler(feature_range=(0,1), copy=True, clip=False)
             return _minmax.fit(x)
         
@@ -309,11 +308,17 @@ class inference_tab():
         if len(self.inference_list)==2 and self.labels is not None:
             if self.similarity_pairs is None:
                 cos_sim = [torch.from_numpy(i.embeddings) for i in self.inference_list]
+                print(cos_sim[0].shape)
+                print(cos_sim[1].shape)
                 self.similarity_pairs = torch.nn.functional.cosine_similarity(cos_sim[0], cos_sim[1])
             if self.labels_norm is None:
                 self.labels_norm = self._normalize(torch.from_numpy(self.labels).unsqueeze(1))
             if self.similarity_norm is None:
                 self.similarity_norm = self._normalize(self.similarity_pairs.unsqueeze(1))
+            if self.manhattan_average is None:
+                _elements = len(self.similarity_pairs)
+                self.manhattan_average = sum([self._divergency(i) for i in range(_elements)])/_elements
+                
             if draw_links:    
                 embedding_group = len(points)//2
                 lines = []
@@ -484,6 +489,15 @@ class inference_tab():
                                                 ],
                                                 value=[]),              
                                     ]),
+                                    html.Div(id = { 'type':'trial-info', 'index': self.index },
+                                             className = 'tab-info',
+                                             children=[html.P([f'Model: {self.model}']),
+                                                       html.P([f'Layers: {self.layer_low} - {self.layer_up}']),
+                                                       html.P([f'Composition Function: {self.comp_func}']),
+                                                       html.P([f'File name: {self.filename}'])]),
+                                    html.Div(id = { 'type':'manhattan-average', 'index': self.index },
+                                             className = 'manhattan-avg-p',
+                                             hidden = True),
 
                                     html.Button('Save Session', id= {'type':'save-session'
                                                                     ,'index': self.index },
@@ -678,12 +692,19 @@ def similarity_table(clickdata,valuesim, valueb ,selected,id,fig):
                 )]
     return _children
 
+################################
+### Similarity Eval Datasets ###
+################################
+
 @app.callback(
     Output({'type':'pairs-table-div','index': MATCH}, 'children'),
     Input({'type':'sentence-table-checkbox','index': MATCH}, 'value'),
     State({'type':'sentence-table-checkbox','index': MATCH}, 'id')
 )
 def pairs_table_update(value, id):
+    """
+    Draws the table with all sentence pairs
+    """
     indx = id['index']
     inf_tab = tab_record.get(indx, [])
     
@@ -701,8 +722,8 @@ def pairs_table_update(value, id):
         df[data.dataset.columns] = data.dataset
 
     if inf_tab.labels is not None and inf_tab.similarity_pairs is not None:
-        df['Labels'] = inf_tab.labels
-        df['Similarity value'] = inf_tab.similarity_pairs
+        df['Labels'] = inf_tab.labels_norm.transform(inf_tab.labels.reshape(-1,1)) if inf_tab.labels[0]>0 else [1]*len(inf_tab.labels)
+        df['Similarity value'] = inf_tab.similarity_norm.transform(inf_tab.similarity_pairs.numpy().reshape(-1,1))
         df['Agreement'] = [inf_tab._divergency(i) for i in range(len(inf_tab.similarity_pairs))]
 
     _children = [dash_table.DataTable(
@@ -721,6 +742,41 @@ def pairs_table_update(value, id):
                 )]
     return _children
 
+@app.callback(
+    Output({'type':'manhattan-average','index': MATCH}, 'children'),
+    Input({'type':'loading-graph', 'index': MATCH}, 'children'),
+    State({'type':'manhattan-average','index': MATCH}, 'id')
+)
+def manhattan_average_value(children, id):
+    indx = id['index']
+    inf_tab = tab_record.get(indx, [])
+    
+    if not inf_tab:
+        return []
+    
+    if not inf_tab:
+        raise dash.exceptions.PreventUpdate
+    children = []
+    if inf_tab.manhattan_average is not None:
+        children = [html.P(f'Metrics average agreement: {round(inf_tab.manhattan_average,4)}')]
+    return children
+
+@app.callback(
+    Output({'type':'manhattan-average','index': MATCH}, 'hidden'),
+    Input({'type':'manhattan-average','index': MATCH}, 'children'),
+    State({'type':'manhattan-average','index': MATCH}, 'id')
+)
+def manhattan_average_div(children, id):
+    indx = id['index']
+    inf_tab = tab_record.get(indx, [])
+    
+    if not inf_tab:
+        return []
+    
+    if not inf_tab:
+        raise dash.exceptions.PreventUpdate
+    
+    return False if inf_tab.manhattan_average else True
 ######################
 #### SAVE TO FILE ####
 ######################
@@ -741,8 +797,6 @@ def save_session(n_clicks, id):
     index = id['index']
     inf_tab = tab_record[index]
     
-    ################
-    ## haz excepciones antes de tocar, crea el folder, etc
     _saved_dict = {}
     for i in inf_tab[:]:
         data_session = i.get_dataset().to_frame()
@@ -767,9 +821,3 @@ def save_session(n_clicks, id):
         json.dump(_saved_dict, file)
         
     return 0
-
-if __name__ == '__main__':
-    a = inference_tab('test','test','test','test','test',1,2,'fc',13,[1,2])
-    print(a[0].model)
-    for i in a[:]:
-        print('test1')
